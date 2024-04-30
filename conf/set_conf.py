@@ -1,14 +1,8 @@
-'''
-获取配置文件中的相关信息
-
-'''
-
 import configparser
 import pathlib
 
-# 定义conf.ini的文件路径
+# 定义 conf.ini 的文件路径
 file = pathlib.Path(__file__).parents[0].resolve() / 'conf.ini'
-
 
 # 读取配置信息
 def read(section, option):
@@ -26,5 +20,23 @@ def read(section, option):
 
     return conf.get(section, option)
 
+# 写入配置信息
+def write(section, option, value):
+    conf = configparser.ConfigParser()
+    conf.read(file)
 
-print(read('servers', 'Dev'))
+    if not conf.has_section(section):
+        conf.add_section(section)
+
+    conf.set(section, option, value)
+
+    # 使用 'w' 模式重新写入配置文件
+    with open(file, 'w') as f:
+        conf.write(f)
+
+# 示例读取配置信息
+try:
+    server = read('servers', 'Dev')
+    print("Server:", server)
+except (FileNotFoundError, KeyError) as e:
+    print("错误:", e)

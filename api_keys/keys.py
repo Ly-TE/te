@@ -4,7 +4,7 @@
 '''
 
 import requests
-from conf import read_conf
+from conf import set_conf
 
 
 class Apikeys:
@@ -59,7 +59,7 @@ class Apikeys:
         Returns:
             str: 拼接后的 URL
         """
-        url = read_conf.read('servers', 'Dev')  # 假设 'servers' 是配置文件中的部分，'Dev' 是选项
+        url = set_conf.read('servers', 'Dev')  # 假设 'servers' 是配置文件中的部分，'Dev' 是选项
         if path:
             url = url + path
         return url
