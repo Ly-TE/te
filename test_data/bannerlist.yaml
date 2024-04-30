@@ -1,0 +1,8 @@
+- path: tools/banner/list
+  params:
+    group: app_down_20220705
+#    lang: zh_CN
+#    region_code: 1
+#    account_token:
+#    src_channel: guanwang
+#    os_type: 4
