@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/pytest/InterAutoTest_W（项目及框架代码）/InterAutoTest_W" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/pytest/InterAutoTest_W（项目及框架代码）/auto" vcs="Git" />
   </component>
 </project>
