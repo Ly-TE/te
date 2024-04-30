@@ -1,11 +1,11 @@
 - path: api/auth/login
   data:
     os_type: 4
-    password: f02d49289d80a01a7fa36aa9281e6904
-    mobile_num: 13997505254
+    password: 'f02d49289d80a01a7fa36aa9281e6904'
+    mobile_num: '13997505254'
     src_channel: guanwang
     country_code: 86
-    username: 13997505254
-    lang: zh_CN
+    username: '13997505254'
+    lang: 'zh_CN'
     region_code: 1
     account_token: null
