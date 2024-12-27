@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>前端调用加密解密接口</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        input {
+            margin-bottom: 10px;
+        }
+
+        button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="text" id="numbersInput" placeholder="请输入要加密的数字">
+    <button id="encryptButton">加密</button>
+    <button id="decryptButton">解密</button>
+    <div id="resultDiv"></div>
+
+    <script>
+        const encryptButton = document.getElementById('encryptButton');
+        const decryptButton = document.getElementById('decryptButton');
+        const numbersInput = document.getElementById('numbersInput');
+        const resultDiv = document.getElementById('resultDiv');
+        const baseurl = 'http://127.0.0.1:5000';
+        const encryptionKey = 'leigod0123456789';
+
+        // 通用的请求处理函数，用于发送POST请求并处理响应
+        async function sendPostRequest(url, data) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.status === 200) {
+                    return await response.text();
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`请求失败，状态码: ${response.status}，错误信息: ${errorText}`);
+                }
+            } catch (error) {
+                throw new Error(`请求过程出现错误: ${error.message}`);
+            }
+        }
+
+        encryptButton.addEventListener('click', async () => {
+            const numbersToEncrypt = numbersInput.value;
+            if (isNaN(numbersToEncrypt)) {
+                resultDiv.textContent = '请输入一个有效的整数！';
+                return;
+            }
+
+            try {
+                const encryptedData = await sendPostRequest(`${baseurl}/encrypt`, {
+                    numbers: numbersToEncrypt
+                });
+                resultDiv.textContent = `加密后的结果: ${encryptedData}`;
+            } catch (error) {
+                resultDiv.textContent = `加密过程出现错误: ${error.message}`;
+            }
+        });
+
+        decryptButton.addEventListener('click', async () => {
+            const encryptedResultStr = numbersInput.value;
+            console.log("准备发送给后端解密的加密结果数据: ", encryptedResultStr); // 添加日志输出
+
+            try {
+                const decryptedData = await sendPostRequest(`${baseurl}/decrypt`, {
+                    encryptedResult: encryptedResultStr
+                });
+                if (decryptedData) {
+                    resultDiv.textContent = `解密后的结果: ${decryptedData}`;
+                } else {
+                    resultDiv.textContent = `解密失败: 请检查输入数据或密钥是否正确。`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `解密过程出现错误: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+
+</html>
