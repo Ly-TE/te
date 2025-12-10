@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考勤工时计算器</title>
+    <style>
+        /* 保持原有样式不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .input-area {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .file-upload {
+            border: 2px dashed #ddd;
+            padding: 30px;
+            text-align: center;
+            border-radius: 6px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #4285f4;
+        }
+
+        .file-upload p {
+            color: #999;
+            margin-top: 10px;
+        }
+
+        #file-name {
+            margin-top: 10px;
+            color: #333;
+        }
+
+        input[type="number"] {
+            width: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3367d6;
+        }
+
+        .result-area {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+
+        .result-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .details-section {
+            margin-top: 30px;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .details-table th, .details-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .details-table th {
+            background-color: #f1f1f1;
+            font-weight: bold;
+        }
+
+        .status-valid {
+            color: #0f9d58;
+        }
+
+        .status-invalid {
+            color: #d93025;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: #4285f4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #d93025;
+            padding: 15px;
+            background-color: #fce8e6;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>考勤工时计算器</h1>
+
+        <div class="input-area">
+            <div class="form-group">
+                <label>上传Excel考勤文件（.xlsx）</label>
+                <div class="file-upload" id="file-upload">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19" stroke="#999" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M5 12L12 5L19 12" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p>点击或拖拽文件到此处上传</p>
+                    <input type="file" id="file-input" accept=".xlsx" style="display: none">
+                    <div id="file-name"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="manual-days">统计有效天数（留空则自动计算）</label>
+                <input type="number" id="manual-days" placeholder="例如：10">
+            </div>
+
+            <button id="calculate-btn">开始计算</button>
+        </div>
+
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>正在计算，请稍候...</p>
+        </div>
+
+        <div class="error" id="error-message"></div>
+
+        <div class="result-area" id="result-area">
+            <div class="result-header">
+                <h2>计算结果</h2>
+            </div>
+
+            <div class="result-stats">
+                <div class="stat-item">
+                    <div class="stat-label">总计时长</div>
+                    <div class="stat-value" id="total-hours">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">有效工作天数</div>
+                    <div class="stat-value" id="valid-days">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">统计天数</div>
+                    <div class="stat-value" id="stat-days">-</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">扣除午休后平均时长</div>
+                    <div class="stat-value" id="adjusted-hours">-</div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <h3>数据明细</h3>
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>标准工时</th>
+                            <th>实际工时</th>
+                            <th>状态</th>
+                            <th>计入工时</th>
+                            <th>来源</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-body">
+                        <!-- 明细数据将通过JS动态插入 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 修复文件上传交互逻辑
+        const fileUpload = document.getElementById('file-upload');
+        const fileInput = document.getElementById('file-input');
+        const fileName = document.getElementById('file-name');
+        const manualDaysInput = document.getElementById('manual-days');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const loading = document.querySelector('.loading');
+        const errorMessage = document.getElementById('error-message');
+        const resultArea = document.getElementById('result-area');
+        const detailsBody = document.getElementById('details-body');
+
+        // 1. 点击上传区域触发文件选择
+        fileUpload.addEventListener('click', () => {
+            fileInput.click(); // 触发隐藏的file input点击事件
+        });
+
+        // 2. 选择文件后显示文件名
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileName.textContent = `已选择: ${e.target.files[0].name}`;
+            }
+        });
+
+        // 3. 拖拽文件支持
+        fileUpload.addEventListener('dragover', (e) => {
+            e.preventDefault(); // 允许拖拽
+            fileUpload.style.borderColor = '#4285f4';
+        });
+
+        fileUpload.addEventListener('dragleave', () => {
+            fileUpload.style.borderColor = '#ddd';
+        });
+
+        fileUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUpload.style.borderColor = '#ddd';
+            if (e.dataTransfer.files.length > 0) {
+                // 将拖拽的文件赋值给fileInput
+                fileInput.files = e.dataTransfer.files;
+                fileName.textContent = `已选择: ${e.dataTransfer.files[0].name}`;
+            }
+        });
+
+        // 4. 计算按钮点击事件
+        calculateBtn.addEventListener('click', () => {
+            // 验证是否选择文件
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showError('请先选择Excel文件');
+                return;
+            }
+
+            // 验证文件格式
+            const file = fileInput.files[0];
+            if (!file.name.endsWith('.xlsx')) {
+                showError('请上传.xlsx格式的Excel文件');
+                return;
+            }
+
+            // 准备表单数据
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // 手动天数（可选）
+            const manualDays = manualDaysInput.value.trim();
+            if (manualDays) {
+                formData.append('manual_days', manualDays);
+            }
+
+            // 显示加载状态
+            showLoading();
+            hideError();
+            hideResult();
+
+            // 调用后端接口
+            fetch('/api/calculate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    showResult(data);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                showError('计算失败，请重试');
+                console.error(error);
+            });
+        });
+
+        // 辅助函数：显示加载状态
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        // 辅助函数：隐藏加载状态
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // 辅助函数：显示错误信息
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        // 辅助函数：隐藏错误信息
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // 辅助函数：隐藏结果区域
+        function hideResult() {
+            resultArea.style.display = 'none';
+        }
+
+        // 辅助函数：显示计算结果
+        function showResult(data) {
+            // 更新统计数据
+            document.getElementById('total-hours').textContent = `${data.total_hours} 小时`;
+            document.getElementById('valid-days').textContent = `${data.valid_days} 天`;
+            document.getElementById('stat-days').textContent = `${data.stat_days} 天`;
+            document.getElementById('adjusted-hours').textContent = `${data.adjusted_hours} 小时/天`;
+
+            // 清空之前的明细
+            detailsBody.innerHTML = '';
+
+            // 插入明细数据
+            data.details.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.record_num}</td>
+                    <td>${item.standard_hour}</td>
+                    <td>${item.actual_hour}</td>
+                    <td class="${item.status.includes('有效') ? 'status-valid' : 'status-invalid'}">${item.status}</td>
+                    <td>${item.used_hour}</td>
+                    <td>${item.source}</td>
+                `;
+                detailsBody.appendChild(row);
+            });
+
+            // 显示结果区域
+            resultArea.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
