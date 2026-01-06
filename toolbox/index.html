@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发工具箱 - 首页</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="logo">
+        <h2><i class="fas fa-toolbox"></i> 开发工具箱</h2>
+        <p>v1.1.0</p>
+    </div>
+    <ul class="menu">
+        <li>
+            <a href="index.html" class="menu-item active">
+                <i class="fas fa-home"></i> 首页
+            </a>
+        </li>
+        <li>
+            <a href="encryption.html" class="menu-item">
+                <i class="fas fa-lock"></i> 加密解密工具
+            </a>
+        </li>
+        <li>
+            <a href="json-format.html" class="menu-item">
+                <i class="fas fa-code"></i> JSON格式化
+            </a>
+        </li>
+        <li>
+            <a href="api-test.html" class="menu-item">
+                <i class="fas fa-plug"></i> API测试
+            </a>
+        </li>
+        <li>
+            <a href="documentation.html" class="menu-item">
+                <i class="fas fa-book"></i> 使用文档
+            </a>
+        </li>
+        <li>
+            <a href="about.html" class="menu-item">
+                <i class="fas fa-info-circle"></i> 关于我们
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-content">
+    <div class="content-header">
+        <h1>开发工具箱</h1>
+        <p>一站式开发辅助工具集合，为您提供便捷的开发体验</p>
+    </div>
+
+    <div class="function-card">
+        <h2><i class="fas fa-tools"></i> 工具集合</h2>
+
+        <div class="tools-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+            <a href="encryption.html" style="text-decoration: none;">
+                <div class="tool-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px; transition: transform 0.3s ease;">
+                    <h3><i class="fas fa-lock"></i> 加密解密工具</h3>
+                    <p>基于AES-ECB算法的安全加密解密服务</p>
+                </div>
+            </a>
+
+            <a href="json-format.html" style="text-decoration: none;">
+                <div class="tool-card" style="background: linear-gradient(135deg, #00b09b, #96c93d); color: white; padding: 25px; border-radius: 12px; transition: transform 0.3s ease;">
+                    <h3><i class="fas fa-code"></i> JSON格式化</h3>
+                    <p>美化和验证JSON数据格式</p>
+                </div>
+            </a>
+
+            <a href="api-test.html" style="text-decoration: none;">
+                <div class="tool-card" style="background: linear-gradient(135deg, #ff7e5f, #feb47b); color: white; padding: 25px; border-radius: 12px; transition: transform 0.3s ease;">
+                    <h3><i class="fas fa-plug"></i> API测试</h3>
+                    <p>直接测试加密解密API接口</p>
+                </div>
+            </a>
+        </div>
+
+        <div style="margin-top: 40px; background: #f8f9fa; padding: 25px; border-radius: 12px;">
+            <h3><i class="fas fa-rocket"></i> 快速开始</h3>
+            <ul style="margin-top: 15px; padding-left: 20px; color: #666;">
+                <li>选择左侧菜单进入对应工具</li>
+                <li>使用快捷键提高效率：Ctrl+E (加密) / Ctrl+D (解密)</li>
+                <li>API服务器地址：http://10.1.3.160:5000</li>
+                <li>所有工具完全免费，无使用限制</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 服务器状态 -->
+<div class="server-status">
+    <span class="status-dot"></span>
+    <span>服务运行中: 10.1.3.160:5000</span>
+</div>
+
+<script>
+    // 设置当前页面激活状态
+    document.addEventListener('DOMContentLoaded', function() {
+        // 修改后的代码
+        const menuItems = document.querySelectorAll('.menu-item'); // 选择所有<a>标签
+        const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+
+        menuItems.forEach(item => {
+            const href = item.getAttribute('href');
+            if (href === currentPage) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
+        // 为工具卡片添加悬停效果
+        document.querySelectorAll('.tool-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+</body>
+</html>
