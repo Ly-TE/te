@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API测试 - 开发工具箱</title>
-    <link rel="stylesheet" href="css/common.css">
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="../static/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -21,18 +22,18 @@
             </a>
         </li>
         <li>
-            <a href="encryption.html" class="menu-item">
-                <i class="fas fa-lock"></i> 加密解密工具
+            <a href="encode.html" class="menu-item">
+                <i class="fas fa-lock"></i>  雷神加解密
             </a>
         </li>
         <li>
-            <a href="json-format.html" class="menu-item">
-                <i class="fas fa-code"></i> JSON格式化
+            <a href="ocpc.html" class="menu-item">
+                <i class="fas fa-database"></i> OCPC查询
             </a>
         </li>
         <li>
             <a href="api-test.html" class="menu-item active">
-                <i class="fas fa-plug"></i> API测试
+                <i class="fas fa-plug"></i> API
             </a>
         </li>
         <li>
@@ -51,8 +52,8 @@
 <!-- 主内容区 -->
 <div class="main-content">
     <div class="content-header">
-        <h1>API接口测试工具</h1>
-        <p>直接测试加密解密API接口，查看原始响应数据</p>
+        <h1>API接口</h1>
+        <!--        <p>加密解密API接口，查看原始响应数据</p>-->
     </div>
 
     <div class="function-card">
@@ -76,9 +77,9 @@
             </div>
 
             <div class="button-group">
-                <a href="encryption.html" class="btn encrypt-btn">
-                    <i class="fas fa-lock"></i> 前往加密解密工具
-                </a>
+                <!--                <a href="encryption.html" class="btn encrypt-btn">-->
+                <!--                    <i class="fas fa-lock"></i> 前往加密解密工具-->
+                <!--                </a>-->
                 <a href="index.html" class="btn" style="background: #95a5a6; color: white;">
                     <i class="fas fa-home"></i> 返回首页
                 </a>
@@ -90,12 +91,17 @@
         <h4><i class="fas fa-info-circle"></i> 当前可用接口</h4>
         <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
             <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
-                <h5 style="color: #20c997;">POST /encrypt</h5>
-                <p style="color: #20c997; font-size: 0.9rem;">加密数据接口</p>
+                <p style="color: #666; font-size: 0.9rem;">加密数据接口</p>
+                <h5 style="color: #20c997; margin: 0; display: inline;">POST
+                    http://vf-staffapi.nn.com/tools/rc4/encode</h5>
+
+
             </div>
             <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #00b09b;">
-                <h5 style="color: #20c997;">POST /decrypt</h5>
                 <p style="color: #666; font-size: 0.9rem;">解密数据接口</p>
+                <h5 style="color: #20c997;margin: 0; display: inline;">POST
+                    http://vf-staffapi.nn.com/tools/rc4/decode</h5>
+
             </div>
             <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ff7e5f;">
                 <h5 style="color:#20c997;"> POST /decrypt2</h5>

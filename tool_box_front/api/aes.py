@@ -9,12 +9,12 @@ CORS(app)
 # ========== 根路由：返回HTML页面 ==========
 @app.route('/')
 def index():
-    return send_from_directory('../tools/play/static', 'index.html')
+    return send_from_directory('../../tools/play/static', 'index.html')
 
 # ========== 静态文件服务 ==========
 @app.route('/<path:filename>')
 def static_files(filename):
-    return send_from_directory('../tools/play/static', filename)
+    return send_from_directory('../../tools/play/static', filename)
 
 # ========== 原有业务逻辑 ==========
 app.config['JSON_AS_ASCII'] = False

@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCPC查询 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+
+    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* OCPC查询页面特定样式 */
+        .query-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+
+        .query-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .query-header i {
+            font-size: 24px;
+            color: #3498db;
+            margin-right: 15px;
+        }
+
+        .query-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .query-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .query-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .query-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .query-button:active {
+            transform: translateY(0);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .response-container {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+        }
+
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .status-error {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .result-summary {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid #3498db;
+        }
+
+        .result-summary h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-summary p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .result-div {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .tab-button {
+            padding: 12px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .help-text {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .page-btn {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn:hover {
+            background: #f8f9fa;
+            border-color: #3498db;
+        }
+
+        .page-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            color: #555;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="logo">
+        <h2><i class="fas fa-toolbox"></i> 开发工具箱</h2>
+        <p>v1.1.0</p>
+    </div>
+    <ul class="menu">
+        <li>
+            <a href="index.html" class="menu-item">
+                <i class="fas fa-home"></i> 首页
+            </a>
+        </li>
+        <li>
+            <a href="encode.html" class="menu-item">
+                <i class="fas fa-lock"></i> 雷神加解密
+            </a>
+        </li>
+        <li>
+            <a href="ocpc.html" class="menu-item active">
+                <i class="fas fa-database"></i> OCPC查询
+            </a>
+        </li>
+        <li>
+            <a href="api-test.html" class="menu-item">
+                <i class="fas fa-plug"></i> API
+            </a>
+        </li>
+        <li>
+            <a href="documentation.html" class="menu-item">
+                <i class="fas fa-book"></i> 使用文档
+            </a>
+        </li>
+        <li>
+            <a href="about.html" class="menu-item">
+                <i class="fas fa-info-circle"></i> 关于我们
+            </a>
+        </li>
+    </ul>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-database"></i> OCPC查询工具</h1>
+        <p>查询OCPC映射和日志数据，支持时间范围查询</p>
+    </div>
+
+    <!-- Tab切换 -->
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="mapping-tab">ocpc_mapping 查询</button>
+            <button class="tab-button" data-tab="log-tab">ocpc_log 查询</button>
+            <!--            <button class="tab-button" data-tab="batch-tab">批量查询</button>-->
+        </div>
+    </div>
+
+    <!-- ocpc_mapping 查询 -->
+    <div id="mapping-tab" class="tab-content active">
+        <div class="query-section">
+            <div class="query-header">
+                <i class="fas fa-table"></i>
+                <h3>ocpc_mapping 数据查询</h3>
+            </div>
+
+            <form id="mapping-form">
+                <div class="query-grid">
+                    <div class="form-group">
+                        <label for="mapping-channel"><i class="fas fa-filter"></i> Channel *</label>
+                        <input type="text" id="mapping-channel" class="form-control" value="bytes" required>
+                        <div class="help-text">查询的渠道标识，默认为 bytes</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mapping-start-time"><i class="fas fa-calendar-alt"></i> 开始时间</label>
+                        <input type="text" id="mapping-start-time" class="form-control" placeholder="YYYY-MM-DD">
+                        <div class="help-text">格式：YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mapping-end-time"><i class="fas fa-calendar-alt"></i> 结束时间</label>
+                        <input type="text" id="mapping-end-time" class="form-control" placeholder="YYYY-MM-DD">
+                        <div class="help-text">可选，不填则查询到最新</div>
+                    </div>
+                </div>
+
+                <div class="query-grid">
+                    <div class="form-group">
+                        <label for="mapping-page"><i class="fas fa-file-alt"></i> 页码</label>
+                        <input type="number" id="mapping-page" class="form-control" value="1" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mapping-page-size"><i class="fas fa-list-ol"></i> 每页大小</label>
+                        <input type="number" id="mapping-page-size" class="form-control" value="50" min="1" max="1000">
+                        <div class="help-text">1-1000之间</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mapping-env"><i class="fas fa-server"></i> 环境</label>
+                        <select id="mapping-env" class="form-control">
+                            <option value="testing">测试环境</option>
+                            <option value="development">开发环境</option>
+                            <option value="production">生产环境</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="query-button">
+                        <i class="fas fa-search"></i> 查询数据
+                    </button>
+                    <button type="button" class="query-button" style="background: #95a5a6;" id="mapping-reset">
+                        <i class="fas fa-redo"></i> 重置
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="mapping-loading">
+                <div class="loading-spinner"></div>
+                <p>正在查询数据...</p>
+            </div>
+
+            <div class="response-container" id="mapping-response">
+                <div class="response-header">
+                    <h4><i class="fas fa-poll"></i> 查询结果</h4>
+                    <div id="mapping-status"></div>
+                </div>
+
+                <div id="mapping-summary"></div>
+
+                <!-- 分页控件 -->
+                <div class="pagination" id="mapping-pagination" style="display: none;">
+                    <button class="page-btn" id="mapping-prev">上一页</button>
+                    <span class="page-info" id="mapping-page-info"></span>
+                    <button class="page-btn" id="mapping-next">下一页</button>
+                </div>
+
+                <h5><i class="fas fa-code"></i> 返回数据：</h5>
+                <div id="mapping-result" class="result-div">
+                    查询结果将显示在这里...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ocpc_log 查询 -->
+    <div id="log-tab" class="tab-content">
+        <div class="query-section">
+            <div class="query-header">
+                <i class="fas fa-history"></i>
+                <h3>ocpc_log 数据查询</h3>
+            </div>
+
+            <form id="log-form">
+                <div class="query-grid">
+                    <div class="form-group">
+                        <label for="log-channel"><i class="fas fa-filter"></i> Channel *</label>
+                        <input type="text" id="log-channel" class="form-control" value="360" required>
+                        <div class="help-text">查询的渠道标识，默认为 360</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="log-start-time"><i class="fas fa-calendar-alt"></i> 开始时间</label>
+                        <input type="text" id="log-start-time" class="form-control" placeholder="YYYY-MM-DD">
+                        <div class="help-text">格式：YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="log-end-time"><i class="fas fa-calendar-alt"></i> 结束时间</label>
+                        <input type="text" id="log-end-time" class="form-control" placeholder="YYYY-MM-DD">
+                        <div class="help-text">可选，不填则查询到最新</div>
+                    </div>
+                </div>
+
+                <div class="query-grid">
+                    <div class="form-group">
+                        <label for="log-page"><i class="fas fa-file-alt"></i> 页码</label>
+                        <input type="number" id="log-page" class="form-control" value="1" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="log-page-size"><i class="fas fa-list-ol"></i> 每页大小</label>
+                        <input type="number" id="log-page-size" class="form-control" value="50" min="1" max="1000">
+                        <div class="help-text">1-1000之间</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="log-env"><i class="fas fa-server"></i> 环境</label>
+                        <select id="log-env" class="form-control">
+                            <option value="testing">测试环境</option>
+                            <option value="development">开发环境</option>
+                            <option value="production">生产环境</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="query-button">
+                        <i class="fas fa-search"></i> 查询数据
+                    </button>
+                    <button type="button" class="query-button" style="background: #95a5a6;" id="log-reset">
+                        <i class="fas fa-redo"></i> 重置
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="log-loading">
+                <div class="loading-spinner"></div>
+                <p>正在查询数据...</p>
+            </div>
+
+            <div class="response-container" id="log-response">
+                <div class="response-header">
+                    <h4><i class="fas fa-poll"></i> 查询结果</h4>
+                    <div id="log-status"></div>
+                </div>
+
+                <div id="log-summary"></div>
+
+                <!-- 分页控件 -->
+                <div class="pagination" id="log-pagination" style="display: none;">
+                    <button class="page-btn" id="log-prev">上一页</button>
+                    <span class="page-info" id="log-page-info"></span>
+                    <button class="page-btn" id="log-next">下一页</button>
+                </div>
+
+                <h5><i class="fas fa-code"></i> 返回数据：</h5>
+                <div id="log-result" class="result-div">
+                    查询结果将显示在这里...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量查询 -->
+    <div id="batch-tab" class="tab-content">
+        <div class="query-section">
+            <div class="query-header">
+                <i class="fas fa-layer-group"></i>
+                <h3>批量查询</h3>
+            </div>
+
+            <div class="form-group">
+                <label for="batch-env"><i class="fas fa-server"></i> 环境</label>
+                <select id="batch-env" class="form-control">
+                    <option value="testing">测试环境</option>
+                    <option value="development">开发环境</option>
+                    <option value="production">生产环境</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label><i class="fas fa-list"></i> 查询配置 (JSON格式)</label>
+                <textarea id="batch-config" class="form-control" rows="8" placeholder='{
+  "queries": [
+    {
+      "table": "ocpc_mapping",
+      "channel": "bytes",
+      "start_time": "2025-08-01",
+      "end_time": "2025-08-31"
+    },
+    {
+      "table": "ocpc_log",
+      "channel": "360",
+      "start_time": "2023-08-01"
+    }
+  ]
+}'></textarea>
+                <div class="help-text">支持同时查询多个表，支持时间范围</div>
+            </div>
+
+            <div class="button-group">
+                <button class="query-button" id="batch-submit">
+                    <i class="fas fa-play"></i> 执行批量查询
+                </button>
+                <button class="query-button" style="background: #2ecc71;" id="batch-format">
+                    <i class="fas fa-indent"></i> 格式化JSON
+                </button>
+                <button class="query-button" style="background: #95a5a6;" id="batch-clear">
+                    <i class="fas fa-broom"></i> 清空
+                </button>
+            </div>
+
+            <div class="loading" id="batch-loading">
+                <div class="loading-spinner"></div>
+                <p>正在执行批量查询...</p>
+            </div>
+
+            <div class="response-container" id="batch-response">
+                <div class="response-header">
+                    <h4><i class="fas fa-poll"></i> 批量查询结果</h4>
+                    <div id="batch-status"></div>
+                </div>
+
+                <div id="batch-summary"></div>
+
+                <h5><i class="fas fa-code"></i> 返回数据：</h5>
+                <div id="batch-result" class="result-div">
+                    批量查询结果将显示在这里...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用说明 -->
+    <div class="query-section" style="background: #f8f9fa; border-left: 4px solid #2ecc71;">
+        <div class="query-header">
+            <i class="fas fa-lightbulb"></i>
+            <h3>使用说明</h3>
+        </div>
+
+        <div style="padding: 15px; color: #555;">
+            <h4><i class="fas fa-info-circle"></i> 接口说明：</h4>
+            <ul style="margin: 10px 0 10px 20px;">
+                <li><strong>ocpc_mapping</strong>：查询渠道映射数据，默认channel为"bytes"</li>
+                <li><strong>ocpc_log</strong>：查询渠道日志数据，默认channel为"360"</li>
+                <li><strong>批量查询</strong>：同时查询多个表，支持不同时间范围</li>
+            </ul>
+
+            <h4><i class="fas fa-keyboard"></i> 参数说明：</h4>
+            <ul style="margin: 10px 0 10px 20px;">
+                <li><strong>channel</strong>：必填，渠道标识符</li>
+                <li><strong>start_time</strong>：可选，开始时间（YYYY-MM-DD 或 YYYY-MM-DD HH:MM:SS）</li>
+                <li><strong>end_time</strong>：可选，结束时间</li>
+                <li><strong>page</strong>：页码，从1开始</li>
+                <li><strong>page_size</strong>：每页数据量，1-1000之间</li>
+            </ul>
+
+            <h4><i class="fas fa-rocket"></i> 快捷操作：</h4>
+            <ul style="margin: 10px 0 10px 20px;">
+                <li>点击Tab切换不同查询类型</li>
+                <li>使用上下页按钮浏览分页数据</li>
+                <li>批量查询支持JSON格式配置</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 服务器状态 -->
+<div class="server-status">
+    <span class="status-dot"></span>
+    <span>OCPC查询工具 - 数据库连接正常</span>
+</div>
+
+<script>
+    // API基础配置
+    const API_BASE_URL = 'http://10.1.3.160:5000';
+    const API_PREFIX = '/api/v1';
+
+    // 显示消息函数
+    function showMessage(element, message, type = 'info') {
+        element.textContent = message;
+        element.className = 'result-div';
+
+        if (type === 'success') {
+            element.style.border = '1px solid #2ecc71';
+        } else if (type === 'error') {
+            element.style.border = '1px solid #e74c3c';
+        } else if (type === 'warning') {
+            element.style.border = '1px solid #f39c12';
+        }
+    }
+
+    // 显示状态徽章
+    function showStatus(element, message, type = 'info') {
+        element.innerHTML = `<span class="status-badge status-${type}">${message}</span>`;
+    }
+
+    // 显示加载状态
+    function showLoading(loadingElement, responseElement) {
+        loadingElement.style.display = 'block';
+        responseElement.style.display = 'none';
+    }
+
+    // 隐藏加载状态
+    function hideLoading(loadingElement, responseElement) {
+        loadingElement.style.display = 'none';
+        responseElement.style.display = 'block';
+    }
+
+    // Tab切换功能
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function() {
+            // 移除所有tab的active类
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 添加当前tab的active类
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+
+    // ocpc_mapping 查询
+    document.getElementById('mapping-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const channel = document.getElementById('mapping-channel').value;
+        const startTime = document.getElementById('mapping-start-time').value;
+        const endTime = document.getElementById('mapping-end-time').value;
+        const page = document.getElementById('mapping-page').value;
+        const pageSize = document.getElementById('mapping-page-size').value;
+        const env = document.getElementById('mapping-env').value;
+
+        // 构建URL
+        let url = `${API_BASE_URL}${API_PREFIX}/query/ocpc-mapping?channel=${encodeURIComponent(channel)}`;
+        if (startTime) url += `&start_time=${encodeURIComponent(startTime)}`;
+        if (endTime) url += `&end_time=${encodeURIComponent(endTime)}`;
+        if (page) url += `&page=${page}`;
+        if (pageSize) url += `&page_size=${pageSize}`;
+        url += `&env=${env}`;
+
+        // 显示加载状态
+        const loadingElement = document.getElementById('mapping-loading');
+        const responseElement = document.getElementById('mapping-response');
+        showLoading(loadingElement, responseElement);
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            // 隐藏加载状态
+            hideLoading(loadingElement, responseElement);
+
+            // 显示结果
+            const resultElement = document.getElementById('mapping-result');
+            resultElement.textContent = JSON.stringify(data, null, 2);
+
+            // 显示状态
+            const statusElement = document.getElementById('mapping-status');
+            if (data.success) {
+                showStatus(statusElement, '查询成功', 'success');
+
+                // 显示摘要
+                const summaryElement = document.getElementById('mapping-summary');
+                summaryElement.innerHTML = `
+                    <div class="result-summary">
+                        <h4>
+                            <i class="fas fa-check-circle" style="color: #2ecc71;"></i>
+                            查询成功
+                        </h4>
+                        <p><strong>返回数据：</strong>${data.data.length} 条</p>
+                        <p><strong>总记录数：</strong>${data.pagination?.total || 0}</p>
+                        <p><strong>当前页码：</strong>${data.pagination?.page || 1} / ${data.pagination?.total_pages || 1}</p>
+                        <p><strong>查询时间：</strong>${data.timestamp}</p>
+                        <p><strong>数据库：</strong>${data.query_info?.database || '未知'}</p>
+                    </div>
+                `;
+
+                // 显示分页控件
+                const paginationElement = document.getElementById('mapping-pagination');
+                const pageInfoElement = document.getElementById('mapping-page-info');
+                const prevBtn = document.getElementById('mapping-prev');
+                const nextBtn = document.getElementById('mapping-next');
+
+                if (data.pagination && data.pagination.total_pages > 1) {
+                    paginationElement.style.display = 'flex';
+                    pageInfoElement.textContent = `第 ${data.pagination.page} 页 / 共 ${data.pagination.total_pages} 页`;
+
+                    // 上一页按钮
+                    prevBtn.disabled = data.pagination.page <= 1;
+                    prevBtn.classList.toggle('disabled', data.pagination.page <= 1);
+                    prevBtn.onclick = function() {
+                        if (data.pagination.page > 1) {
+                            document.getElementById('mapping-page').value = data.pagination.page - 1;
+                            document.getElementById('mapping-form').dispatchEvent(new Event('submit'));
+                        }
+                    };
+
+                    // 下一页按钮
+                    nextBtn.disabled = data.pagination.page >= data.pagination.total_pages;
+                    nextBtn.classList.toggle('disabled', data.pagination.page >= data.pagination.total_pages);
+                    nextBtn.onclick = function() {
+                        if (data.pagination.page < data.pagination.total_pages) {
+                            document.getElementById('mapping-page').value = data.pagination.page + 1;
+                            document.getElementById('mapping-form').dispatchEvent(new Event('submit'));
+                        }
+                    };
+                } else {
+                    paginationElement.style.display = 'none';
+                }
+
+            } else {
+                showStatus(statusElement, '查询失败', 'error');
+
+                const summaryElement = document.getElementById('mapping-summary');
+                summaryElement.innerHTML = `
+                    <div class="result-summary">
+                        <h4>
+                            <i class="fas fa-exclamation-circle" style="color: #e74c3c;"></i>
+                            查询失败
+                        </h4>
+                        <p><strong>错误信息：</strong>${data.error || '未知错误'}</p>
+                        <p><strong>错误代码：</strong>${data.code || '无'}</p>
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            hideLoading(loadingElement, responseElement);
+            showMessage(document.getElementById('mapping-result'), `请求失败：${error.message}`, 'error');
+            showStatus(document.getElementById('mapping-status'), '请求失败', 'error');
+        }
+    });
+
+    // ocpc_log 查询
+    document.getElementById('log-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const channel = document.getElementById('log-channel').value;
+        const startTime = document.getElementById('log-start-time').value;
+        const endTime = document.getElementById('log-end-time').value;
+        const page = document.getElementById('log-page').value;
+        const pageSize = document.getElementById('log-page-size').value;
+        const env = document.getElementById('log-env').value;
+
+        // 构建URL
+        let url = `${API_BASE_URL}${API_PREFIX}/query/ocpc-log?channel=${encodeURIComponent(channel)}`;
+        if (startTime) url += `&start_time=${encodeURIComponent(startTime)}`;
+        if (endTime) url += `&end_time=${encodeURIComponent(endTime)}`;
+        if (page) url += `&page=${page}`;
+        if (pageSize) url += `&page_size=${pageSize}`;
+        url += `&env=${env}`;
+
+        // 显示加载状态
+        const loadingElement = document.getElementById('log-loading');
+        const responseElement = document.getElementById('log-response');
+        showLoading(loadingElement, responseElement);
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            // 隐藏加载状态
+            hideLoading(loadingElement, responseElement);
+
+            // 显示结果
+            const resultElement = document.getElementById('log-result');
+            resultElement.textContent = JSON.stringify(data, null, 2);
+
+            // 显示状态
+            const statusElement = document.getElementById('log-status');
+            if (data.success) {
+                showStatus(statusElement, '查询成功', 'success');
+
+                // 显示摘要
+                const summaryElement = document.getElementById('log-summary');
+                summaryElement.innerHTML = `
+                    <div class="result-summary">
+                        <h4>
+                            <i class="fas fa-check-circle" style="color: #2ecc71;"></i>
+                            查询成功
+                        </h4>
+                        <p><strong>返回数据：</strong>${data.data.length} 条</p>
+                        <p><strong>总记录数：</strong>${data.pagination?.total || 0}</p>
+                        <p><strong>当前页码：</strong>${data.pagination?.page || 1} / ${data.pagination?.total_pages || 1}</p>
+                        <p><strong>查询时间：</strong>${data.timestamp}</p>
+                        <p><strong>数据库：</strong>${data.query_info?.database || '未知'}</p>
+                    </div>
+                `;
+
+                // 显示分页控件
+                const paginationElement = document.getElementById('log-pagination');
+                const pageInfoElement = document.getElementById('log-page-info');
+                const prevBtn = document.getElementById('log-prev');
+                const nextBtn = document.getElementById('log-next');
+
+                if (data.pagination && data.pagination.total_pages > 1) {
+                    paginationElement.style.display = 'flex';
+                    pageInfoElement.textContent = `第 ${data.pagination.page} 页 / 共 ${data.pagination.total_pages} 页`;
+
+                    // 上一页按钮
+                    prevBtn.disabled = data.pagination.page <= 1;
+                    prevBtn.classList.toggle('disabled', data.pagination.page <= 1);
+                    prevBtn.onclick = function() {
+                        if (data.pagination.page > 1) {
+                            document.getElementById('log-page').value = data.pagination.page - 1;
+                            document.getElementById('log-form').dispatchEvent(new Event('submit'));
+                        }
+                    };
+
+                    // 下一页按钮
+                    nextBtn.disabled = data.pagination.page >= data.pagination.total_pages;
+                    nextBtn.classList.toggle('disabled', data.pagination.page >= data.pagination.total_pages);
+                    nextBtn.onclick = function() {
+                        if (data.pagination.page < data.pagination.total_pages) {
+                            document.getElementById('log-page').value = data.pagination.page + 1;
+                            document.getElementById('log-form').dispatchEvent(new Event('submit'));
+                        }
+                    };
+                } else {
+                    paginationElement.style.display = 'none';
+                }
+
+            } else {
+                showStatus(statusElement, '查询失败', 'error');
+
+                const summaryElement = document.getElementById('log-summary');
+                summaryElement.innerHTML = `
+                    <div class="result-summary">
+                        <h4>
+                            <i class="fas fa-exclamation-circle" style="color: #e74c3c;"></i>
+                            查询失败
+                        </h4>
+                        <p><strong>错误信息：</strong>${data.error || '未知错误'}</p>
+                        <p><strong>错误代码：</strong>${data.code || '无'}</p>
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            hideLoading(loadingElement, responseElement);
+            showMessage(document.getElementById('log-result'), `请求失败：${error.message}`, 'error');
+            showStatus(document.getElementById('log-status'), '请求失败', 'error');
+        }
+    });
+
+    // 批量查询
+    document.getElementById('batch-submit').addEventListener('click', async function() {
+        const env = document.getElementById('batch-env').value;
+        const configText = document.getElementById('batch-config').value.trim();
+
+        if (!configText) {
+            alert('请输入批量查询配置');
+            document.getElementById('batch-config').focus();
+            return;
+        }
+
+        let config;
+        try {
+            config = JSON.parse(configText);
+        } catch (error) {
+            alert(`JSON格式错误：${error.message}`);
+            return;
+        }
+
+        const payload = {
+            ...config,
+            env: env
+        };
+
+        const url = `${API_BASE_URL}${API_PREFIX}/query/batch`;
+
+        // 显示加载状态
+        const loadingElement = document.getElementById('batch-loading');
+        const responseElement = document.getElementById('batch-response');
+        showLoading(loadingElement, responseElement);
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            // 隐藏加载状态
+            hideLoading(loadingElement, responseElement);
+
+            // 显示结果
+            const resultElement = document.getElementById('batch-result');
+            resultElement.textContent = JSON.stringify(data, null, 2);
+
+            // 显示状态
+            const statusElement = document.getElementById('batch-status');
+            if (data.success) {
+                showStatus(statusElement, '批量查询成功', 'success');
+
+                // 显示摘要
+                const summaryElement = document.getElementById('batch-summary');
+                let successCount = 0;
+                let totalCount = 0;
+
+                if (data.results) {
+                    data.results.forEach(result => {
+                        totalCount++;
+                        if (result.success) successCount++;
+                    });
+                }
+
+                summaryElement.innerHTML = `
+                    <div class="result-summary">
+                        <h4>
+                            <i class="fas fa-check-circle" style="color: #2ecc71;"></i>
+                            批量查询完成
+                        </h4>
+                        <p><strong>成功查询：</strong>${successCount} 个</p>
+                        <p><strong>失败查询：</strong>${totalCount - successCount} 个</p>
+                        <p><strong>总查询数：</strong>${totalCount} 个</p>
+                        <p><strong>环境：</strong>${data.environment}</p>
+                        <p><strong>执行时间：</strong>${data.timestamp}</p>
+                    </div>
+                `;
+            } else {
+                showStatus(statusElement, '批量查询失败', 'error');
+
+                const summaryElement = document.getElementById('batch-summary');
+                summaryElement.innerHTML = `
+                    <div class="result-summary">
+                        <h4>
+                            <i class="fas fa-exclamation-circle" style="color: #e74c3c;"></i>
+                            批量查询失败
+                        </h4>
+                        <p><strong>错误信息：</strong>${data.error || '未知错误'}</p>
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            hideLoading(loadingElement, responseElement);
+            showMessage(document.getElementById('batch-result'), `请求失败：${error.message}`, 'error');
+            showStatus(document.getElementById('batch-status'), '请求失败', 'error');
+        }
+    });
+
+    // 批量查询格式化JSON
+    document.getElementById('batch-format').addEventListener('click', function() {
+        const configElement = document.getElementById('batch-config');
+        try {
+            const obj = JSON.parse(configElement.value);
+            configElement.value = JSON.stringify(obj, null, 2);
+        } catch (error) {
+            alert(`JSON格式错误：${error.message}`);
+        }
+    });
+
+    // 批量查询清空
+    document.getElementById('batch-clear').addEventListener('click', function() {
+        document.getElementById('batch-config').value = '';
+        document.getElementById('batch-config').focus();
+    });
+
+    // 重置按钮
+    document.getElementById('mapping-reset').addEventListener('click', function() {
+        document.getElementById('mapping-channel').value = 'bytes';
+        document.getElementById('mapping-start-time').value = '';
+        document.getElementById('mapping-end-time').value = '';
+        document.getElementById('mapping-page').value = '1';
+        document.getElementById('mapping-page-size').value = '50';
+        document.getElementById('mapping-env').value = 'testing';
+    });
+
+    document.getElementById('log-reset').addEventListener('click', function() {
+        document.getElementById('log-channel').value = '360';
+        document.getElementById('log-start-time').value = '';
+        document.getElementById('log-end-time').value = '';
+        document.getElementById('log-page').value = '1';
+        document.getElementById('log-page-size').value = '50';
+        document.getElementById('log-env').value = 'testing';
+    });
+
+    // 页面加载完成后的初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 设置当前页面激活状态
+        const menuItems = document.querySelectorAll('.menu-item');
+        const currentPage = window.location.pathname.split('/').pop() || 'ocpc.html';
+
+        menuItems.forEach(item => {
+            const href = item.getAttribute('href');
+            if (href === currentPage) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+
+        // 设置默认时间（一周前）
+        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const formattedDate = lastWeek.toISOString().split('T')[0];
+
+        document.getElementById('mapping-start-time').placeholder = `如：${formattedDate}`;
+        document.getElementById('log-start-time').placeholder = `如：${formattedDate}`;
+
+        // 初始化显示
+        setTimeout(() => {
+            showMessage(document.getElementById('mapping-result'), '✅ OCPC查询工具已准备就绪，请输入查询条件开始查询', 'success');
+            showMessage(document.getElementById('log-result'), '✅ OCPC查询工具已准备就绪，请输入查询条件开始查询', 'success');
+            showMessage(document.getElementById('batch-result'), '✅ OCPC查询工具已准备就绪，请输入批量查询配置', 'success');
+        }, 500);
+    });
+</script>
+</body>
+</html>
