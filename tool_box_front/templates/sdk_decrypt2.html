@@ -511,8 +511,9 @@
     <ul class="menu">
         <li><a href="index.html" class="menu-item"><i class="fas fa-home"></i> 首页</a></li>
         <li><a href="ocpc.html" class="menu-item"><i class="fas fa-database"></i> OCPC查询</a></li>
-        <li><a href="sdk_decrypt.html" class="menu-item active"><i class="fas fa-lock-open"></i> SDK日志解密</a></li>
-        <li><a href="sdk_decrypt2.html" class="menu-item"><i class="fas fa-lock-open"></i> SDK日志解密V2</a></li>
+        <li><a href="sdk_decrypt.html" class="menu-item"><i class="fas fa-lock-open"></i> SDK日志解密</a></li>
+        <li><a href="sdk_decrypt2.html" class="menu-item active"><i class="fas fa-lock-open"></i> SDK日志解密V2</a></li>
+        <li><a href="timestamp.html" class="menu-item"><i class="fas fa-clock"></i> 时间计算器</a></li>
     </ul>
 </div>
 
@@ -609,7 +610,6 @@
         </div>
 
 
-
         <!-- 文本区域容器 - 输出在上面 -->
         <div class="text-areas-container">
             <!-- 输出文本框（放在上面） -->
@@ -618,8 +618,10 @@
                     <h4><i class="fas fa-file-code"></i> 解密结果输出</h4>
                     <div class="text-area-actions">
                         <span class="text-area-count" id="outputCount">0 字符</span>
-                        <input type="text" class="search-input" id="outputSearch" placeholder="查找..." onkeydown="handleSearchKeydown(event, 'outputText')">
-                        <button class="action-btn fullscreen-btn" onclick="toggleFullscreen('outputWrapper')" title="全屏查看">
+                        <input type="text" class="search-input" id="outputSearch" placeholder="查找..."
+                               onkeydown="handleSearchKeydown(event, 'outputText')">
+                        <button class="action-btn fullscreen-btn" onclick="toggleFullscreen('outputWrapper')"
+                                title="全屏查看">
                             <i class="fas fa-expand"></i>
                         </button>
                         <button class="action-btn" onclick="toggleSearch('outputSearch')" title="查找文本">
@@ -642,7 +644,8 @@
                     <h4><i class="fas fa-file-alt"></i> 原始文本输入</h4>
                     <div class="text-area-actions">
                         <span class="text-area-count" id="inputCount">0 字符</span>
-                        <input type="text" class="search-input" id="inputSearch" placeholder="查找..." onkeydown="handleSearchKeydown(event, 'inputText')">
+                        <input type="text" class="search-input" id="inputSearch" placeholder="查找..."
+                               onkeydown="handleSearchKeydown(event, 'inputText')">
                         <button class="action-btn" onclick="toggleSearch('inputSearch')" title="查找文本">
                             <i class="fas fa-search"></i>
                         </button>
@@ -654,24 +657,25 @@
                         </button>
                     </div>
                 </div>
-                <textarea id="inputText" placeholder="文件内容将显示在这里，或在此处手动输入加密文本..." readonly></textarea>
+                <textarea id="inputText" placeholder="文件内容将显示在这里，或在此处手动输入加密文本..."
+                          readonly></textarea>
             </div>
         </div>
     </div>
-            <!-- 手动输入区域 -->
-        <div class="input-manual-section">
-            <h5><i class="fas fa-keyboard"></i> 手动输入加密文本</h5>
-            <textarea id="manualInput" placeholder="在此处粘贴加密的文本内容（支持十六进制字符串或Base64编码）..."></textarea>
-            <div class="button-group">
-                <button class="btn manual-decrypt-btn" onclick="decryptManualInput()" id="manualDecryptBtn">
-                    <i class="fas fa-magic"></i> 解密手动输入
-                </button>
-                <button class="btn btn-info" onclick="clearManualInput()">
-                    <i class="fas fa-eraser"></i> 清空输入
-                </button>
-            </div>
-            <div class="help-text">提示：可以直接粘贴加密的十六进制字符串（如：1A2B3C4D）或Base64编码字符串</div>
-        </div>
+    <!--            &lt;!&ndash; 手动输入区域 &ndash;&gt;-->
+    <!--        <div class="input-manual-section">-->
+    <!--            <h5><i class="fas fa-keyboard"></i> 手动输入加密文本</h5>-->
+    <!--            <textarea id="manualInput" placeholder="在此处粘贴加密的文本内容（支持十六进制字符串或Base64编码）..."></textarea>-->
+    <!--            <div class="button-group">-->
+    <!--                <button class="btn manual-decrypt-btn" onclick="decryptManualInput()" id="manualDecryptBtn">-->
+    <!--                    <i class="fas fa-magic"></i> 解密手动输入-->
+    <!--                </button>-->
+    <!--                <button class="btn btn-info" onclick="clearManualInput()">-->
+    <!--                    <i class="fas fa-eraser"></i> 清空输入-->
+    <!--                </button>-->
+    <!--            </div>-->
+    <!--            <div class="help-text">提示：可以直接粘贴加密的十六进制字符串（如：1A2B3C4D）或Base64编码字符串</div>-->
+    <!--        </div>-->
 
     <div class="status-bar">
         <div class="progress-container">

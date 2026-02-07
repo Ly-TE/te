@@ -19,18 +19,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 if __name__ == '__main__':
-    # 在后台线程中打开浏览器
-    # browser_thread = threading.Thread(target=open_browser)
-    # browser_thread.daemon = True
-    # browser_thread.start()
 
-    # 导入并运行应用
     from app import app
-
+    # 仅新增这2行！解决静态文件异常+中文接口乱码
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # 禁用静态文件缓存
+    app.config['JSON_AS_ASCII'] = False          # 接口中文不转义
     app.run(
         host='0.0.0.0',
         port=5000,
-        debug=True,
+        debug=False,
         threaded=True,
         use_reloader=False  # 禁用reloader以避免重复启动
     )

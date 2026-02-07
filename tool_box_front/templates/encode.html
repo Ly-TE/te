@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>加密解密工具 - 开发工具箱</title>
     <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
-    <link rel="stylesheet" href="../static/css/common.css">
+    <link rel="stylesheet" href="/static/css/common.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* 加载动画样式 */
@@ -126,20 +126,25 @@
             </a>
         </li>
         <li>
-            <a href="api-test.html" class="menu-item">
-                <i class="fas fa-plug"></i> API
+            <a href="sdk_decrypt.html" class="menu-item active">
+                <i class="fas fa-lock-open"></i> SDK日志解密
             </a>
         </li>
-        <li>
-            <a href="documentation.html" class="menu-item">
-                <i class="fas fa-book"></i> 使用文档
-            </a>
-        </li>
-        <li>
-            <a href="about.html" class="menu-item">
-                <i class="fas fa-info-circle"></i> 关于我们
-            </a>
-        </li>
+        <!--        <li>-->
+        <!--            <a href="api-test.html" class="menu-item">-->
+        <!--                <i class="fas fa-plug"></i> API-->
+        <!--            </a>-->
+        <!--        </li>-->
+        <!--        <li>-->
+        <!--            <a href="documentation.html" class="menu-item">-->
+        <!--                <i class="fas fa-book"></i> 使用文档-->
+        <!--            </a>-->
+        <!--        </li>-->
+        <!--        <li>-->
+        <!--            <a href="about.html" class="menu-item">-->
+        <!--                <i class="fas fa-info-circle"></i> 关于我们-->
+        <!--            </a>-->
+        <!--        </li>-->
     </ul>
 </div>
 
@@ -190,27 +195,27 @@
         <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
             <h4><i class="fas fa-lightbulb"></i> 接口说明：</h4>
 
-            <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <p style="color: #666; font-size: 0.9rem; margin: 0;">加密数据接口</p>
-                    <h5 style="color: #20c997; margin: 0; font-size: 1rem;">POST
-                        http://vf-staffapi.nn.com/tools/rc4/encode</h5>
-                </div>
-                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
-                    <strong>请求参数：</strong> <code>{ "encode_string": "您的文本" }</code>
-                </p>
-            </div>
+<!--            <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">-->
+<!--                <div style="display: flex; justify-content: space-between; align-items: center;">-->
+<!--                    <p style="color: #666; font-size: 0.9rem; margin: 0;">加密数据接口</p>-->
+<!--                    <h5 style="color: #20c997; margin: 0; font-size: 1rem;">POST-->
+<!--                        http://vf-staffapi.nn.com/tools/rc4/encode</h5>-->
+<!--                </div>-->
+<!--                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">-->
+<!--                    <strong>请求参数：</strong> <code>{ "encode_string": "您的文本" }</code>-->
+<!--                </p>-->
+<!--            </div>-->
 
-            <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #00b09b;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <p style="color: #666; font-size: 0.9rem; margin: 0;">解密数据接口</p>
-                    <h5 style="color: #20c997; margin: 0; font-size: 1rem;">POST
-                        http://vf-staffapi.nn.com/tools/rc4/decode</h5>
-                </div>
-                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">
-                    <strong>请求参数：</strong> <code>{ "decode_string": "加密结果" }</code>
-                </p>
-            </div>
+<!--            <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #00b09b;">-->
+<!--                <div style="display: flex; justify-content: space-between; align-items: center;">-->
+<!--                    <p style="color: #666; font-size: 0.9rem; margin: 0;">解密数据接口</p>-->
+<!--                    <h5 style="color: #20c997; margin: 0; font-size: 1rem;">POST-->
+<!--                        http://vf-staffapi.nn.com/tools/rc4/decode</h5>-->
+<!--                </div>-->
+<!--                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">-->
+<!--                    <strong>请求参数：</strong> <code>{ "decode_string": "加密结果" }</code>-->
+<!--                </p>-->
+<!--            </div>-->
 
             <div style="margin-top: 15px;">
                 <p style="margin: 0 0 8px 0; color: #495057; font-weight: bold;">功能特性：</p>
@@ -438,46 +443,58 @@
         }
     });
 
-    // 复制结果函数
-    copyButton.addEventListener('click', async () => {
-        const textToCopy = resultDiv.textContent;
-        if (!textToCopy || textToCopy.includes('等待处理结果')) {
-            return;
-        }
+copyButton.addEventListener('click', async () => {
+    const textToCopy = resultDiv.textContent;
 
-        try {
-            // 提取结果部分
-            let copyText = textToCopy;
-            const patterns = [
-                /加密结果：\n([\s\S]+?)(?:\n\n📋|💡)/,
-                /原始数据：\n([\s\S]+?)(?:\n\n📋|$)/
-            ];
+    if (!textToCopy || textToCopy.includes('等待处理结果')) {
+        return;
+    }
 
-            for (const pattern of patterns) {
-                const match = textToCopy.match(pattern);
-                if (match) {
-                    copyText = match[1].trim();
-                    break;
-                }
+    try {
+        // 简单方案：直接复制整个结果区域文本
+        // 或者只复制结果部分（假设结果总是从第二段开始）
+        const lines = textToCopy.split('\n');
+        let resultStart = false;
+        let resultLines = [];
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // 找到包含"结果"的行，下一行开始是实际结果
+            if (line.includes('结果') || line.includes('数据')) {
+                resultStart = true;
+                continue;
             }
 
-            await navigator.clipboard.writeText(copyText);
-
-            // 显示复制成功反馈
-            const originalText = copyButton.innerHTML;
-            copyButton.innerHTML = '<i class="fas fa-check"></i> 已复制';
-            copyButton.classList.add('success');
-
-            setTimeout(() => {
-                copyButton.innerHTML = originalText;
-                copyButton.classList.remove('success');
-            }, 2000);
-        } catch (error) {
-            console.error('复制失败:', error);
-            showMessage('复制失败，请手动选择复制', 'error');
+            // 收集结果行，直到遇到空行
+            if (resultStart && line.trim() !== '') {
+                resultLines.push(line);
+            } else if (resultStart && line.trim() === '' && resultLines.length > 0) {
+                break;
+            }
         }
-    });
 
+        const copyText = resultLines.length > 0
+            ? resultLines.join('\n').trim()
+            : textToCopy;
+
+        await navigator.clipboard.writeText(copyText);
+
+        // 显示复制成功反馈
+        const originalText = copyButton.innerHTML;
+        copyButton.innerHTML = '<i class="fas fa-check"></i> 已复制';
+        copyButton.classList.add('success');
+
+        setTimeout(() => {
+            copyButton.innerHTML = originalText;
+            copyButton.classList.remove('success');
+        }, 2000);
+
+    } catch (error) {
+        console.error('复制失败:', error);
+        showMessage('复制失败，请手动选择复制', 'error');
+    }
+});
     // 清空按钮
     clearButton.addEventListener('click', () => {
         numbersInput.value = '';
