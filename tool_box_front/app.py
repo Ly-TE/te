@@ -32,19 +32,73 @@ except ImportError as e:
     print("请确保 DB/database.py 文件存在")
     sys.exit(1)
 
-# 配置日志
+# 配置日志(提前配置，在导入工具模块前)
 logging.basicConfig(level=logging.DEBUG if config.DEBUG else logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# 导入工具模块
+try:
+    from utils import SDKLogDecryptor, CryptoUtils
+    logger.info("✅ 工具模块导入成功")
+except ImportError as e:
+    logger.warning(f"⚠️ 工具模块导入失败: {e}")
+    logger.warning("部分功能可能不可用")
+    SDKLogDecryptor = None
+    CryptoUtils = None
+
+# 导入服务模块
+try:
+    from services import OCPCService
+    ocpc_service = OCPCService(db_manager)
+    logger.info("✅ OCPC服务初始化成功")
+except ImportError as e:
+    logger.warning(f"⚠️ 服务模块导入失败: {e}")
+    logger.warning("OCPC查询功能可能不可用")
+    OCPCService = None
+    ocpc_service = None
+
+try:
+    from services.user_channel_service import UserChannelService
+    user_channel_service = UserChannelService(db_manager)
+    logger.info("✅ 用户渠道服务初始化成功")
+except ImportError as e:
+    logger.warning(f"⚠️ 用户渠道服务模块导入失败: {e}")
+    logger.warning("用户渠道修改功能可能不可用")
+    UserChannelService = None
+    user_channel_service = None
+
+# 导入统一登录服务
+try:
+    from services.token_service import token_service
+    logger.info("✅ 统一登录服务初始化成功")
+except ImportError as e:
+    logger.warning(f"⚠️ 统一登录服务模块导入失败: {e}")
+    token_service = None
+
 # 获取当前文件所在的目录
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 在应用创建前定义蓝图注册函数
+def register_blueprints():
+    """注册所有蓝图"""
+    try:
+        from api.auth_api import auth_bp
+        app.register_blueprint(auth_bp)
+        logger.info("✅ 统一登录API蓝图注册成功")
+    except ImportError as e:
+        logger.warning(f"⚠️ 统一登录API蓝图注册失败: {e}")
+    except Exception as e:
+        logger.error(f"蓝图注册异常: {e}")
 
 # ========== 第1处修改：使用绝对路径配置Flask ==========
 app = Flask(__name__, template_folder=os.path.join(BASE_DIR, 'templates'),  # 绝对路径
             static_folder=os.path.join(BASE_DIR, 'static')  # 绝对路径
             )
 CORS(app)  # 允许跨域
+
+# 立即注册所有蓝图
+register_blueprints()
 
 
 @app.after_request
@@ -101,19 +155,32 @@ def inject_template_variables():
 # 🟢 请求频率限制配置
 # ============================================
 class RateLimiter:
-    """简单的请求频率限制器"""
+    """请求频率限制器 - 用于防止API滥用"""
 
-    def __init__(self):
-        # 存储每个IP的请求时间戳
+    def __init__(self, cleanup_interval: int = 60):
+        """
+        初始化频率限制器
+        
+        Args:
+            cleanup_interval: 清理过期记录的时间间隔(秒)
+        """
         self.request_history = defaultdict(list)
-        # 线程锁，确保线程安全
         self.lock = Lock()
-        # 清理过期记录的时间间隔（秒）
-        self.cleanup_interval = 60
+        self.cleanup_interval = cleanup_interval
         self.last_cleanup = time.time()
 
-    def is_allowed(self, ip_address, limit=2, window=1):
-        """检查是否允许请求"""
+    def is_allowed(self, ip_address: str, limit: int = 2, window: int = 1) -> tuple:
+        """
+        检查IP是否允许请求
+        
+        Args:
+            ip_address: 客户端IP地址
+            limit: 时间窗口内允许的最大请求数
+            window: 时间窗口大小(秒)
+            
+        Returns:
+            (是否允许, 需要等待的时间)
+        """
         current_time = time.time()
 
         # 定期清理过期记录
@@ -122,82 +189,118 @@ class RateLimiter:
             self.last_cleanup = current_time
 
         with self.lock:
-            # 获取该IP的请求历史
             timestamps = self.request_history[ip_address]
-
+            
             # 移除超出时间窗口的记录
             valid_timestamps = [ts for ts in timestamps if current_time - ts < window]
             self.request_history[ip_address] = valid_timestamps
 
             # 检查是否超过限制
             if len(valid_timestamps) >= limit:
-                # 计算需要等待的时间
                 oldest_timestamp = min(valid_timestamps)
                 remaining_time = window - (current_time - oldest_timestamp)
                 return False, max(0, remaining_time)
 
-            # 添加当前请求时间戳
+            # 记录当前请求
             self.request_history[ip_address].append(current_time)
             return True, 0
 
-    def _cleanup_expired(self, window):
+    def _cleanup_expired(self, window: int):
         """清理过期的请求记录"""
         current_time = time.time()
         with self.lock:
-            expired_ips = []
-            for ip, timestamps in self.request_history.items():
-                # 保留在时间窗口内的记录
-                valid_timestamps = [ts for ts in timestamps if current_time - ts < window * 2]
-                if valid_timestamps:
-                    self.request_history[ip] = valid_timestamps
-                else:
-                    expired_ips.append(ip)
+            # 使用字典推导式清理过期记录
+            self.request_history = defaultdict(
+                list,
+                {
+                    ip: [ts for ts in timestamps if current_time - ts < window * 2]
+                    for ip, timestamps in self.request_history.items()
+                    if any(current_time - ts < window * 2 for ts in timestamps)
+                }
+            )
 
-            # 删除没有有效记录的IP
-            for ip in expired_ips:
-                del self.request_history[ip]
-
-    def get_stats(self, ip_address=None):
-        """获取限制器统计信息"""
+    def get_stats(self, ip_address: str = None) -> dict:
+        """
+        获取限制器统计信息
+        
+        Args:
+            ip_address: 要查询的IP地址，为None时返回总体统计
+            
+        Returns:
+            统计信息字典
+        """
         current_time = time.time()
         with self.lock:
             if ip_address:
                 if ip_address in self.request_history:
                     timestamps = self.request_history[ip_address]
                     recent = [ts for ts in timestamps if current_time - ts < 10]
-                    return {'ip': ip_address, 'total_requests': len(timestamps), 'recent_requests': len(recent),
-                            'last_request': max(timestamps) if timestamps else None}
-                else:
-                    return {'ip': ip_address, 'message': 'No requests recorded'}
-            else:
-                return {'total_ips': len(self.request_history),
-                        'total_requests': sum(len(timestamps) for timestamps in self.request_history.values())}
+                    return {
+                        'ip': ip_address,
+                        'total_requests': len(timestamps),
+                        'recent_requests': len(recent),
+                        'last_request': max(timestamps) if timestamps else None
+                    }
+                return {'ip': ip_address, 'message': 'No requests recorded'}
+            
+            return {
+                'total_ips': len(self.request_history),
+                'total_requests': sum(len(ts) for ts in self.request_history.values())
+            }
 
 
 # 创建全局频率限制器实例
 rate_limiter = RateLimiter()
 
 
-def get_client_ip():
-    """获取客户端真实IP地址"""
+def get_client_ip() -> str:
+    """
+    获取客户端真实IP地址
+    处理代理和负载均衡的情况
+    
+    Returns:
+        客户端IP地址
+    """
+    # 优先级: X-Forwarded-For > X-Real-IP > remote_addr
     if request.headers.get('X-Forwarded-For'):
-        # 处理代理情况
         ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+    elif request.headers.get('X-Real-IP'):
+        ip = request.headers.get('X-Real-IP').strip()
     else:
         ip = request.remote_addr
-    return ip
+    return ip or '0.0.0.0'
 
 
-def apply_rate_limit(limit=2, window=1):
-    """应用频率限制装饰器"""
-
+def apply_rate_limit(limit: int = 2, window: int = 1):
+    """
+    请求频率限制装饰器
+    
+    Args:
+        limit: 时间窗口内允许的最大请求数
+        window: 时间窗口大小(秒)
+        
+    Returns:
+        装饰器函数
+        
+    Example:
+        @app.route('/api/endpoint')
+        @apply_rate_limit(limit=5, window=60)  # 每分钟最多5次请求
+        def endpoint():
+            return jsonify({'data': 'value'})
+    """
     def decorator(f):
+        from functools import wraps
+        
+        @wraps(f)
         def wrapper(*args, **kwargs):
             client_ip = get_client_ip()
             allowed, wait_time = rate_limiter.is_allowed(client_ip, limit, window)
 
             if not allowed:
-                logger.warning(f"🚫 请求频率限制 - IP: {client_ip}, 路径: {request.path}, 需等待: {wait_time:.2f}秒")
+                logger.warning(
+                    f"🚫 请求频率限制 - IP: {client_ip}, "
+                    f"路径: {request.path}, 需等待: {wait_time:.2f}秒"
+                )
                 return jsonify({'success': False, 'error': f'请求过于频繁，请等待 {wait_time:.1f} 秒后重试',
                                 'code': 'RATE_LIMIT_EXCEEDED', 'wait_time': wait_time, 'ip': client_ip, 'limit': limit,
                                 'window': window,
@@ -217,7 +320,6 @@ def apply_rate_limit(limit=2, window=1):
 
 # 添加应用启动时的初始化标志
 _app_initialized = False
-
 
 def initialize_app():
     """初始化应用"""
@@ -318,118 +420,120 @@ def render_template_page(page_name):
         """, 404
 
 
-# ========== 页面路由（不带后缀）==========
-@app.route('/', methods=['GET'])
-def index():
-    """首页"""
-    return render_template_page('index')
+# ============================================
+# 🎨 页面路由辅助函数
+# ============================================
+def register_page_route(url_path: str, template_name: str = None, endpoint: str = None):
+    """
+    注册页面路由的装饰器工厂
+    自动注册带和不带.html后缀的两个路由
+    
+    Args:
+        url_path: URL路径(不带.html)
+        template_name: 模板名称(默认与url_path相同)
+        endpoint: 端点名称(默认与url_path相同，去掉斜杠和连字符)
+        
+    Example:
+        @register_page_route('/index', 'index', 'index_page')
+        def index():
+            '''首页'''
+            pass
+    """
+    def decorator(func):
+        # 确定模板名称和端点名称
+        tpl_name = template_name or url_path.strip('/')
+        ep_name = endpoint or url_path.strip('/').replace('-', '_').replace('/', '_')
+        
+        # 注册不带后缀的路由
+        app.add_url_rule(
+            url_path,
+            endpoint=ep_name,
+            view_func=lambda: render_template_page(tpl_name),
+            methods=['GET']
+        )
+        
+        # 注册带.html后缀的路由
+        html_path = f"{url_path}.html" if not url_path.endswith('/') else f"{url_path}index.html"
+        app.add_url_rule(
+            html_path,
+            endpoint=f"{ep_name}_html",
+            view_func=lambda: render_template_page(tpl_name),
+            methods=['GET']
+        )
+        
+        return func
+    return decorator
 
 
-@app.route('/encode', methods=['GET'])
-def encode_page():
-    """雷神加解密页面"""
-    return render_template_page('encode')
+# ============================================
+# 🎨 页面路由配置
+# ============================================
+# 页面配置列表: (url_path, template_name, description)
+PAGE_ROUTES = [
+    ('/', 'index', '首页'),
+    ('/encode', 'encode', '雷神加解密页面'),
+    ('/ocpc', 'ocpc', 'OCPC查询页面'),
+    ('/api-test', 'api-test', 'API测试页面'),
+    ('/documentation', 'documentation', '使用文档页面'),
+    ('/about', 'about', '关于我们页面'),
+    ('/sdk_decrypt', 'sdk_decrypt', 'SDK日志解密页面'),
+    ('/sdk_decrypt2', 'sdk_decrypt2', 'SDK日志解密V2页面'),
+    ('/timestamp', 'timestamp', '时间计算器页面'),
+    ('/user_duration', 'user_duration', '用户管理页面'),
+    ('/user_channel', 'user_channel', '用户渠道管理页面'),
+]
 
-
-@app.route('/ocpc', methods=['GET'])
-def ocpc_page():
-    """OCPC查询页面"""
-    return render_template_page('ocpc')
-
-
-@app.route('/api-test', methods=['GET'])
-def api_test_page():
-    """API测试页面"""
-    return render_template_page('api-test')
-
-
-@app.route('/documentation', methods=['GET'])
-def documentation_page():
-    """使用文档页面"""
-    return render_template_page('documentation')
-
-
-@app.route('/about', methods=['GET'])
-def about_page():
-    """关于我们页面"""
-    return render_template_page('about')
-
-
-@app.route('/sdk_decrypt2', methods=['GET'])
-def devrypt2_page():
-    """关于我们页面"""
-    return render_template_page('sdk_decrypt2')
-
-
-@app.route('/sdk-decrypt', methods=['GET'])
-def sdk_decrypt_page():
-    """SDK日志解密页面"""
-    return render_template_page('sdk_decrypt')
-
-
-@app.route('/timestamp', methods=['GET'])
-def timestamp():
-    """SDK日志解密页面"""
-    return render_template_page('timestamp')
-
-
-# ========== 页面路由（带.html后缀）==========
-@app.route('/index.html', methods=['GET'])
-def index_html():
-    """首页（带.html后缀）"""
-    return render_template_page('index')
-
-
-@app.route('/encode.html', methods=['GET'])
-def encode_html():
-    """雷神加解密页面（带.html后缀）"""
-    return render_template_page('encode')
-
-
-@app.route('/ocpc.html', methods=['GET'])
-def ocpc_html():
-    """OCPC查询页面（带.html后缀）"""
-    return render_template_page('ocpc')
-
-
-@app.route('/api-test.html', methods=['GET'])
-def api_test_html():
-    """API测试页面（带.html后缀）"""
-    return render_template_page('api-test')
-
-
-@app.route('/documentation.html', methods=['GET'])
-def documentation_html():
-    """使用文档页面（带.html后缀）"""
-    return render_template_page('documentation')
-
-
-@app.route('/about.html', methods=['GET'])
-def about_html():
-    """关于我们页面（带.html后缀）"""
-    return render_template_page('about')
-
-
-@app.route('/sdk_decrypt.html', methods=['GET'])
-def sdk_decrypt_html():
-    """SDK日志解密页面（带.html后缀）"""
-    return render_template_page('sdk_decrypt')
-
-
-@app.route('/sdk_decrypt2.html', methods=['GET'])
-def sdk_decrypt2_html():
-    """关于我们页面"""
-    return render_template_page('sdk_decrypt2')
-
-@app.route('/timestamp.html', methods=['GET'])
-def timestamp_html():
-    """关于我们页面"""
-    return render_template_page('timestamp')
+# 批量注册页面路由
+for url_path, template_name, description in PAGE_ROUTES:
+    # 创建视图函数
+    def make_view(tpl_name=template_name, desc=description):
+        def view_func():
+            f"""
+            {desc}
+            
+            Returns:
+                渲染的HTML页面
+            """
+            return render_template_page(tpl_name)
+        view_func.__name__ = f"{tpl_name.replace('-', '_')}_page"
+        view_func.__doc__ = desc
+        return view_func
+    
+    # 生成端点名称
+    endpoint = template_name.replace('-', '_').replace('/', '_')
+    if url_path == '/':
+        endpoint = 'index'
+    
+    # 注册不带.html后缀的路由
+    app.add_url_rule(
+        url_path,
+        endpoint=endpoint,
+        view_func=make_view(),
+        methods=['GET']
+    )
+    
+    # 注册带.html后缀的路由(首页除外)
+    if url_path != '/':
+        html_path = f"{url_path}.html"
+        app.add_url_rule(
+            html_path,
+            endpoint=f"{endpoint}_html",
+            view_func=make_view(),
+            methods=['GET']
+        )
+    else:
+        # 首页特殊处理: /index.html 也指向首页
+        app.add_url_rule(
+            '/index.html',
+            endpoint='index_html',
+            view_func=make_view(),
+            methods=['GET']
+        )
 
 
 # ========== API接口 ==========
 @app.route('/api', methods=['GET'])
-@apply_rate_limit(limit=5, window=10)
+@apply_rate_limit(limit=50, window=1)
 def api_info():
     """API首页 - 返回JSON信息"""
     db_healthy = db_manager.health_check()
@@ -446,6 +550,7 @@ def api_info():
 
 # 频率限制统计接口
 @app.route('/api/rate-limit-stats', methods=['GET'])
+@apply_rate_limit(limit=50, window=1)
 def rate_limit_stats():
     """获取频率限制统计信息"""
     ip = request.args.get('ip')
@@ -453,185 +558,595 @@ def rate_limit_stats():
     return jsonify({'success': True, 'stats': stats, 'timestamp': datetime.now().isoformat()})
 
 
-# 健康检查端点
-@app.route('/health', methods=['GET'])
-def health_check():
-    """健康检查接口"""
-    try:
-        db_healthy = db_manager.health_check()
-        status_code = 200 if db_healthy else 503
-        status_text = 'healthy' if db_healthy else 'unhealthy'
-
-        return jsonify({'status': status_text, 'timestamp': datetime.now().isoformat(), 'environment': config.ENV,
-                        'database': {'connected': db_healthy, 'host': config.db_config.host,
-                                     'port': config.db_config.port,
-                                     'database': config.db_config.database}}), status_code
-    except Exception as e:
-        logger.error(f"健康检查失败: {str(e)}")
-        return jsonify({'status': 'error', 'error': str(e), 'timestamp': datetime.now().isoformat()}), 503
 
 
 # ========== OCPC查询API ==========
 @app.route(f'{config.API_PREFIX}/query/ocpc-mapping', methods=['GET'])
-@apply_rate_limit(limit=2, window=1)
+@apply_rate_limit(limit=50, window=1)
 def query_ocpc_mapping():
-    """查询 ocpc_mapping 表数据"""
+    """
+    查询ocpc_mapping表数据
+    
+    Query Parameters:
+        channel: 渠道名称(必需)
+        start_time: 开始时间(可选)
+        end_time: 结束时间(可选)
+        order: 排序方式(asc/desc, 默认desc)
+        page: 页码(默认1)
+        page_size: 每页数量(默认20)
+        env: 环境(默认production)
+    """
     try:
-        channel = request.args.get('channel', 'bytes')
-        start_time = request.args.get('start_time')
-        end_time = request.args.get('end_time')
-        order = request.args.get('order', 'desc')
-        env = request.args.get('env', config.ENV)
-        page = request.args.get('page', 1, type=int)
-        page_size = request.args.get('page_size', config.DEFAULT_PAGE_SIZE, type=int)
-
-        if not channel:
-            return jsonify({'success': False, 'error': 'channel参数不能为空', 'code': 'PARAM_ERROR'}), 400
-
-        sql_parts = ["SELECT * FROM `tbl_ocpc_mapping` WHERE `channel` = %s"]
-        params = [channel]
-
-        if start_time:
-            sql_parts.append("AND `create_time` >= %s")
-            params.append(start_time)
-
-        if end_time:
-            sql_parts.append("AND `create_time` <= %s")
-            params.append(end_time)
-
-        sql_parts.append(f"ORDER BY `create_time` {order.upper()}")
-        sql = " ".join(sql_parts)
-        params_tuple = tuple(params)
-
-        result = db_manager.query_paginate(sql=sql, params=params_tuple, page=page, page_size=page_size, env=env)
-
-        return jsonify({'success': True, 'data': result['items'],
-                        'pagination': {'page': result['page'], 'page_size': result['page_size'],
-                                       'total': result['total'], 'total_pages': result['total_pages']},
-                        'query_info': {'channel': channel, 'start_time': start_time, 'end_time': end_time,
-                                       'order': order, 'environment': env, 'database': config.db_config.database,
-                                       'sql': sql, 'params': list(params_tuple)},
-                        'rate_limit_info': {'applied': True, 'limit': 2, 'window': 1},
-                        'timestamp': datetime.now().isoformat()}), 200
-
+        # 获取查询参数
+        params = {
+            'channel': request.args.get('channel', 'bytes'),
+            'start_time': request.args.get('start_time'),
+            'end_time': request.args.get('end_time'),
+            'order': request.args.get('order', 'desc'),
+            'page': request.args.get('page', 1, type=int),
+            'page_size': request.args.get('page_size', config.DEFAULT_PAGE_SIZE, type=int),
+            'env': request.args.get('env', config.ENV)
+        }
+        
+        # 执行查询
+        result = ocpc_service.query_table(table_name='ocpc_mapping', **params)
+        
+        # 格式化响应
+        response = ocpc_service.format_query_response(
+            result=result,
+            query_params={
+                'channel': params['channel'],
+                'start_time': params['start_time'],
+                'end_time': params['end_time'],
+                'order': params['order'],
+                'environment': params['env'],
+                'database': config.db_config.database
+            },
+            rate_limit_info={'applied': True, 'limit': 2, 'window': 1}
+        )
+        
+        return jsonify(response), 200
+        
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'code': 'PARAM_ERROR'
+        }), 400
     except Exception as e:
         logger.error(f"查询ocpc_mapping失败: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'error': '服务器内部错误', 'code': 'INTERNAL_ERROR',
-                        'detail': str(e) if config.DEBUG else None}), 500
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR',
+            'detail': str(e) if config.DEBUG else None
+        }), 500
 
 
 @app.route(f'{config.API_PREFIX}/query/ocpc-log', methods=['GET'])
-@apply_rate_limit(limit=2, window=1)
+@apply_rate_limit(limit=50, window=1)
 def query_ocpc_log():
-    """查询 ocpc_log 表数据"""
+    """
+    查询ocpc_log表数据
+    
+    Query Parameters:
+        channel: 渠道名称(必需)
+        start_time: 开始时间(可选)
+        end_time: 结束时间(可选)
+        order: 排序方式(asc/desc, 默认desc)
+        page: 页码(默认1)
+        page_size: 每页数量(默认20)
+        env: 环境(默认production)
+    """
     try:
-        channel = request.args.get('channel', '360')
-        start_time = request.args.get('start_time')
-        end_time = request.args.get('end_time')
-        order = request.args.get('order', 'desc')
-        env = request.args.get('env', config.ENV)
-        page = request.args.get('page', 1, type=int)
-        page_size = request.args.get('page_size', config.DEFAULT_PAGE_SIZE, type=int)
-
-        if not channel:
-            return jsonify({'success': False, 'error': 'channel参数不能为空', 'code': 'PARAM_ERROR'}), 400
-
-        sql_parts = ["SELECT * FROM `tbl_ocpc_log` WHERE `channel` = %s"]
-        params = [channel]
-
-        if start_time:
-            sql_parts.append("AND `create_time` >= %s")
-            params.append(start_time)
-
-        if end_time:
-            sql_parts.append("AND `create_time` <= %s")
-            params.append(end_time)
-
-        sql_parts.append(f"ORDER BY `create_time` {order.upper()}")
-        sql = " ".join(sql_parts)
-        params_tuple = tuple(params)
-
-        result = db_manager.query_paginate(sql=sql, params=params_tuple, page=page, page_size=page_size, env=env)
-
-        return jsonify({'success': True, 'data': result['items'],
-                        'pagination': {'page': result['page'], 'page_size': result['page_size'],
-                                       'total': result['total'], 'total_pages': result['total_pages']},
-                        'query_info': {'channel': channel, 'start_time': start_time, 'end_time': end_time,
-                                       'order': order, 'environment': env, 'database': config.db_config.database,
-                                       'sql': sql, 'params': list(params_tuple)},
-                        'rate_limit_info': {'applied': True, 'limit': 2, 'window': 1},
-                        'timestamp': datetime.now().isoformat()}), 200
-
+        # 获取查询参数
+        params = {
+            'channel': request.args.get('channel', '360'),
+            'start_time': request.args.get('start_time'),
+            'end_time': request.args.get('end_time'),
+            'order': request.args.get('order', 'desc'),
+            'page': request.args.get('page', 1, type=int),
+            'page_size': request.args.get('page_size', config.DEFAULT_PAGE_SIZE, type=int),
+            'env': request.args.get('env', config.ENV)
+        }
+        
+        # 执行查询
+        result = ocpc_service.query_table(table_name='ocpc_log', **params)
+        
+        # 格式化响应
+        response = ocpc_service.format_query_response(
+            result=result,
+            query_params={
+                'channel': params['channel'],
+                'start_time': params['start_time'],
+                'end_time': params['end_time'],
+                'order': params['order'],
+                'environment': params['env'],
+                'database': config.db_config.database
+            },
+            rate_limit_info={'applied': True, 'limit': 2, 'window': 1}
+        )
+        
+        return jsonify(response), 200
+        
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'code': 'PARAM_ERROR'
+        }), 400
     except Exception as e:
         logger.error(f"查询ocpc_log失败: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'error': '服务器内部错误', 'code': 'INTERNAL_ERROR',
-                        'detail': str(e) if config.DEBUG else None}), 500
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR',
+            'detail': str(e) if config.DEBUG else None
+        }), 500
 
 
 @app.route(f'{config.API_PREFIX}/query/batch', methods=['POST'])
-@apply_rate_limit(limit=1, window=2)
+@apply_rate_limit(limit=50, window=1)
 def batch_query():
-    """批量查询接口"""
+    """
+    批量查询接口
+    
+    Request Body:
+        {
+            "queries": [
+                {
+                    "table": "ocpc_mapping",
+                    "channel": "bytes",
+                    "start_time": "2024-01-01",
+                    "end_time": "2024-01-31",
+                    "order": "desc"
+                }
+            ],
+            "env": "production"
+        }
+    """
     try:
         data = request.get_json()
         if not data:
-            return jsonify({'success': False, 'error': '请求体不能为空', 'code': 'PARAM_ERROR'}), 400
-
+            return jsonify({
+                'success': False,
+                'error': '请求体不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
         queries = data.get('queries', [])
         env = data.get('env', config.ENV)
-
+        
         if not isinstance(queries, list) or len(queries) == 0:
-            return jsonify({'success': False, 'error': 'queries参数必须是非空数组', 'code': 'PARAM_ERROR'}), 400
-
-        results = []
-        for i, query in enumerate(queries):
-            try:
-                table = query.get('table')
-                channel = query.get('channel')
-                start_time = query.get('start_time')
-                end_time = query.get('end_time')
-                order = query.get('order', 'desc')
-
-                if not table or not channel:
-                    results.append({'success': False, 'error': f'第{i + 1}个查询缺少table或channel参数', 'index': i})
-                    continue
-
-                if table not in ['ocpc_mapping', 'ocpc_log']:
-                    results.append({'success': False, 'error': f'第{i + 1}个查询table参数必须是ocpc_mapping或ocpc_log',
-                                    'index': i})
-                    continue
-
-                table_name = f"tbl_ocpc_{'mapping' if table == 'ocpc_mapping' else 'log'}"
-                sql_parts = [f"SELECT * FROM `{table_name}` WHERE `channel` = %s"]
-                params = [channel]
-
-                if start_time:
-                    sql_parts.append("AND `create_time` >= %s")
-                    params.append(start_time)
-
-                if end_time:
-                    sql_parts.append("AND `create_time` <= %s")
-                    params.append(end_time)
-
-                sql_parts.append(f"ORDER BY `create_time` {order.upper()}")
-                sql = " ".join(sql_parts)
-
-                data_result = db_manager.execute_query(sql, tuple(params), env)
-
-                results.append({'success': True, 'table': table, 'channel': channel, 'start_time': start_time,
-                                'end_time': end_time, 'order': order, 'count': len(data_result), 'data': data_result,
-                                'index': i})
-
-            except Exception as e:
-                results.append({'success': False, 'error': f'第{i + 1}个查询执行失败: {str(e)}', 'index': i})
-
-        return jsonify({'success': True, 'results': results, 'environment': env,
-                        'rate_limit_info': {'applied': True, 'limit': 1, 'window': 2},
-                        'timestamp': datetime.now().isoformat()}), 200
-
+            return jsonify({
+                'success': False,
+                'error': 'queries参数必须是非空数组',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        # 执行批量查询
+        results = ocpc_service.batch_query(queries=queries, env=env)
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'environment': env,
+            'rate_limit_info': {'applied': True, 'limit': 1, 'window': 2},
+            'timestamp': datetime.now().isoformat()
+        }), 200
+        
     except Exception as e:
         logger.error(f"批量查询失败: {str(e)}", exc_info=True)
-        return jsonify({'success': False, 'error': '服务器内部错误', 'code': 'INTERNAL_ERROR'}), 500
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+
+# ========== 用户渠道修改API ==========
+@app.route(f'{config.API_PREFIX}/user-channel/update-by-mobile', methods=['POST'])
+@apply_rate_limit(limit=50, window=1)
+def update_user_channel_by_mobile():
+    """
+    通过手机号修改用户注册渠道
+    
+    Request Body:
+        {
+            "mobile": "手机号",
+            "country_code": "国家代码，默认86",
+            "new_channel": "新的注册渠道"
+        }
+    """
+    try:
+        if not user_channel_service:
+            return jsonify({
+                'success': False,
+                'error': '用户渠道服务不可用',
+                'code': 'SERVICE_UNAVAILABLE'
+            }), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求体不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        mobile = data.get('mobile')
+        country_code = data.get('country_code', '86')
+        new_channel = data.get('new_channel')
+        
+        if not mobile or not new_channel:
+            return jsonify({
+                'success': False,
+                'error': '手机号和新渠道参数不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        # 执行更新操作
+        result = user_channel_service.update_user_channel_by_mobile(
+            mobile=mobile,
+            country_code=country_code,
+            new_channel=new_channel
+        )
+        
+        # 格式化响应
+        response = user_channel_service.format_update_response(
+            result=result,
+            operation_params={
+                'mobile': mobile,
+                'country_code': country_code,
+                'new_channel': new_channel,
+                'operation': 'update_by_mobile'
+            }
+        )
+        
+        status_code = 200 if result['success'] else 400
+        return jsonify(response), status_code
+        
+    except Exception as e:
+        logger.error(f"通过手机号修改用户渠道失败: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+
+@app.route(f'{config.API_PREFIX}/user-channel/update-by-nn-id', methods=['POST'])
+@apply_rate_limit(limit=50, window=1)
+def update_user_channel_by_nn_id():
+    """
+    通过NN ID修改用户注册渠道
+    
+    Request Body:
+        {
+            "nn_id": "用户NN ID",
+            "new_channel": "新的注册渠道"
+        }
+    """
+    try:
+        if not user_channel_service:
+            return jsonify({
+                'success': False,
+                'error': '用户渠道服务不可用',
+                'code': 'SERVICE_UNAVAILABLE'
+            }), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求体不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        nn_id = data.get('nn_id')
+        new_channel = data.get('new_channel')
+        
+        if not nn_id or not new_channel:
+            return jsonify({
+                'success': False,
+                'error': 'NN ID和新渠道参数不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        # 执行更新操作
+        result = user_channel_service.update_user_channel(
+            nn_id=nn_id,
+            new_channel=new_channel
+        )
+        
+        # 格式化响应
+        response = user_channel_service.format_update_response(
+            result=result,
+            operation_params={
+                'nn_id': nn_id,
+                'new_channel': new_channel,
+                'operation': 'update_by_nn_id'
+            }
+        )
+        
+        status_code = 200 if result['success'] else 400
+        return jsonify(response), status_code
+        
+    except Exception as e:
+        logger.error(f"通过NN ID修改用户渠道失败: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+
+@app.route(f'{config.API_PREFIX}/user-channel/search', methods=['GET'])
+@apply_rate_limit(limit=50, window=1)
+def search_user():
+    """
+    通过手机号或NN ID查询用户信息
+    
+    Query Parameters:
+        - mobile: 手机号
+        - country_code: 国家代码(默认86)
+        - nn_id: NN ID
+    """
+    try:
+        if not user_channel_service:
+            return jsonify({
+                'success': False,
+                'error': '用户渠道服务不可用',
+                'code': 'SERVICE_UNAVAILABLE'
+            }), 500
+        
+        mobile = request.args.get('mobile')
+        country_code = request.args.get('country_code', '86')
+        nn_id = request.args.get('nn_id')
+        
+        if not mobile and not nn_id:
+            return jsonify({
+                'success': False,
+                'error': '必须提供手机号或NN ID参数',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        user_info = None
+        if mobile:
+            user_info = user_channel_service.get_user_by_mobile(mobile, country_code)
+        elif nn_id:
+            user_info = user_channel_service.get_user_by_nn_id(nn_id)
+        
+        if user_info:
+            return jsonify({
+                'success': True,
+                'data': user_info,
+                'operation': 'search_user',
+                'timestamp': datetime.now().isoformat()
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': '用户不存在',
+                'code': 'USER_NOT_FOUND'
+            }), 404
+        
+    except Exception as e:
+        logger.error(f"查询用户信息失败: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+
+@app.route(f'{config.API_PREFIX}/update_register_time', methods=['POST'])
+@apply_rate_limit(limit=50, window=1)
+def update_register_time():
+    """
+    更新用户注册时间
+    
+    Request Body:
+        {
+            "user_id": "用户ID",
+            "new_create_time": "新的注册时间 (YYYY-MM-DD HH:MM:SS)",
+            "account_token": "账户令牌"
+        }
+    """
+    try:
+        if not user_channel_service:
+            return jsonify({
+                'success': False,
+                'error': '用户渠道服务不可用',
+                'code': 'SERVICE_UNAVAILABLE'
+            }), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求体不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        user_id = data.get('user_id')
+        new_create_time = data.get('new_create_time')
+        account_token = data.get('account_token')
+        
+        if not user_id or not new_create_time or not account_token:
+            return jsonify({
+                'success': False,
+                'error': '用户ID、新注册时间和账户令牌参数不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        # 验证时间格式
+        try:
+            datetime.strptime(new_create_time, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'error': '时间格式错误，应为 YYYY-MM-DD HH:MM:SS',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        # 执行更新操作
+        result = user_channel_service.update_user_register_time(
+            user_id=user_id,
+            new_create_time=new_create_time
+        )
+        
+        # 格式化响应
+        response = {
+            'success': result['success'],
+            'message': result['message'],
+            'operation': 'update_register_time',
+            'timestamp': datetime.now().isoformat(),
+            'updated_data': {
+                'user_id': user_id,
+                'new_create_time': new_create_time
+            }
+        }
+        
+        if result['success']:
+            logger.info(f"用户注册时间更新成功: user_id={user_id}, new_create_time={new_create_time}")
+            return jsonify(response), 200
+        else:
+            logger.warning(f"用户注册时间更新失败: user_id={user_id}, error={result['message']}")
+            return jsonify(response), 400
+        
+    except Exception as e:
+        logger.error(f"更新用户注册时间失败: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR'
+        }), 500
+
+
+@app.route(f'{config.API_PREFIX}/update_payment_status', methods=['POST'])
+@apply_rate_limit(limit=50, window=1)
+def update_payment_status():
+    """
+    更新用户付费状态
+    
+    Request Body:
+        {
+            "user_id": "用户ID",
+            "first_pay_time": "首次付费时间 (YYYY-MM-DD HH:MM:SS 或 null)",
+            "account_token": "账户令牌"
+        }
+    """
+    try:
+        if not user_channel_service:
+            return jsonify({
+                'success': False,
+                'error': '用户渠道服务不可用',
+                'code': 'SERVICE_UNAVAILABLE'
+            }), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': '请求体不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        user_id = data.get('user_id')
+        # 兼容两种参数名
+        first_pay_time = data.get('first_pay_time') or data.get('new_first_pay_time')
+        account_token = data.get('account_token')
+        
+        # 添加调试日志
+        logger.info(f"接收到的参数: user_id={user_id}, first_pay_time={first_pay_time}, account_token={account_token}")
+        logger.info(f"原始数据: {data}")
+        
+        if not user_id or not account_token:
+            return jsonify({
+                'success': False,
+                'error': '用户ID和账户令牌参数不能为空',
+                'code': 'PARAM_ERROR'
+            }), 400
+        
+        # 验证时间格式（如果提供了时间）
+        if first_pay_time is not None and first_pay_time != 'null':
+            try:
+                # 尝试多种时间格式解析
+                parsed_time = None
+                
+                # 格式1: 标准MySQL格式 YYYY-MM-DD HH:MM:SS
+                try:
+                    parsed_time = datetime.strptime(first_pay_time, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    pass
+                
+                # 格式2: ISO格式 YYYY-MM-DDTHH:MM:SS.sssZ
+                if parsed_time is None:
+                    try:
+                        parsed_time = datetime.fromisoformat(first_pay_time.replace('Z', '+00:00'))
+                    except ValueError:
+                        pass
+                
+                # 格式3: ISO格式 YYYY-MM-DDTHH:MM:SS
+                if parsed_time is None:
+                    try:
+                        parsed_time = datetime.fromisoformat(first_pay_time)
+                    except ValueError:
+                        pass
+                
+                # 如果都没匹配成功，返回错误
+                if parsed_time is None:
+                    return jsonify({
+                        'success': False,
+                        'error': f'时间格式错误，支持格式: YYYY-MM-DD HH:MM:SS 或 ISO格式',
+                        'received_value': first_pay_time,
+                        'code': 'PARAM_ERROR'
+                    }), 400
+                
+                # 统一转换为MySQL格式
+                first_pay_time = parsed_time.strftime('%Y-%m-%d %H:%M:%S')
+                
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'error': f'时间解析失败: {str(e)}',
+                    'received_value': first_pay_time,
+                    'code': 'PARAM_ERROR'
+                }), 400
+        
+        # 执行更新操作
+        result = user_channel_service.update_user_payment_status(
+            user_id=user_id,
+            first_pay_time=first_pay_time
+        )
+        
+        # 格式化响应
+        response = {
+            'success': result['success'],
+            'message': result['message'],
+            'operation': 'update_payment_status',
+            'timestamp': datetime.now().isoformat(),
+            'updated_data': {
+                'user_id': user_id,
+                'first_pay_time': first_pay_time
+            }
+        }
+        
+        if result['success']:
+            logger.info(f"用户付费状态更新成功: user_id={user_id}, first_pay_time={first_pay_time}")
+            return jsonify(response), 200
+        else:
+            logger.warning(f"用户付费状态更新失败: user_id={user_id}, error={result['message']}")
+            return jsonify(response), 400
+        
+    except Exception as e:
+        logger.error(f"更新用户付费状态失败: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': '服务器内部错误',
+            'code': 'INTERNAL_ERROR'
+        }), 500
 
 
 # ========== 错误处理 ==========

@@ -49,7 +49,7 @@ class DBConfig:
             port=int(os.getenv('TEST_DB_PORT', 33506)),
             user=os.getenv('TEST_DB_USER', 'leigod_pre_w'),
             password=os.getenv('TEST_DB_PASSWORD', 'VgLaQcyoheXpsx'),
-            database=os.getenv('TEST_DB_NAME', None),
+            database='leigod_config',  # 指定正确的数据库
             charset=os.getenv('TEST_DB_CHARSET', 'utf8mb4')
         ),
 

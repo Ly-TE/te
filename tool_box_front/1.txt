@@ -1,0 +1,29 @@
+这是增加可暂停时长的相关接口
+
+curl -X PUT "https://vf-staffapi.leigod.com/staff/member/144526939/duration" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "User-Agent: Mozilla/5.0" \
+  -d "account_token=ncdGuPaDjfn8sGo3Rfp2tvIQLeVxaHQfxSrutPqs54UmoeuQSATKj4moa0UeL37H&id=0&duration_type=1&minutes_type=9&send_time_type=1&minutes=3000&desc=补偿"
+
+
+  这是增加不可暂停时长的相关接口
+  curl -X PUT "https://vf-staffapi.leigod.com/staff/member/144526939/duration" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "User-Agent: Mozilla/5.0" \
+  -d "account_token=ncdGuPaDjfn8sGo3Rfp2tvIQLeVxaHQfxSrutPqs54UmoeuQSATKj4moa0UeL37H&id=0&duration_type=2&minutes_type=9&send_time_type=1&minutes=3000&desc=补偿"
+
+
+
+这是扣减可暂停时长的相关接口
+curl -X PUT "https://vf-staffapi.leigod.com/staff/member/time/144526939" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "account_token=ncdGuPaDjfn8sGo3Rfp2tvIQLeVxaHQfxSrutPqs54UmoeuQSATKj4moa0UeL37H&reduce_type=1&reduce_time=3000&invoice_money=0"
+
+这是扣减不可暂停时长的相关接口
+curl -X PUT "https://vf-staffapi.leigod.com/staff/member/time/144526939" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "account_token=ncdGuPaDjfn8sGo3Rfp2tvIQLeVxaHQfxSrutPqs54UmoeuQSATKj4moa0UeL37H&reduce_type=2&reduce_time=3000&invoice_money=0"
+
+
+
+时长单位都是分钟
