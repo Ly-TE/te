@@ -340,14 +340,9 @@
     <ul class="menu">
         <li><a href="index.html" class="menu-item"><i class="fas fa-home"></i> 首页</a></li>
         <li><a href="ocpc.html" class="menu-item"><i class="fas fa-database"></i> OCPC查询</a></li>
-        <li><a href="sdk_decrypt.html" class="menu-item"><i class="fas fa-lock-open"></i> SDK日志解密</a></li>
+        <li><a href="sdk_decrypt.html" class="menu-item active"><i class="fas fa-lock-open"></i> SDK日志解密</a></li>
         <li><a href="sdk_decrypt2.html" class="menu-item"><i class="fas fa-lock-open"></i> SDK日志解密V2</a></li>
-        <!--        <li><a href="timestamp.html" class="menu-item"><i class="fas fa-clock"></i> 时间计算器</a></li>-->
-        <li>
-            <a href="user_duration.html" class="menu-item">
-                <i class="fas fa-clock"></i> 用户管理
-            </a>
-        </li>
+        <li><a href="timestamp.html" class="menu-item"><i class="fas fa-clock"></i> 时间计算器</a></li>
     </ul>
 </div>
 
@@ -458,6 +453,11 @@
 
 </div>
 
+<div class="server-status">
+    <span class="status-dot"></span>
+    <span>SDK日志解密工具 - 已就绪</span>
+</div>
+
 <script>
     // 全局状态
     let isDecrypting = false;
@@ -492,7 +492,7 @@
     const statLines = document.getElementById('statLines');
     const statEncrypted = document.getElementById('statEncrypted');
     const statSize = document.getElementById('statSize');
-    const serverStatusSpan = null;
+    const serverStatusSpan = document.querySelector('.server-status span:last-child');
 
     // ============= 核心：内置GBK/UTF-8解码逻辑，彻底移除CDN依赖 =============
     function decodeBytesToText(bytes, encoding = 'GBK') {
