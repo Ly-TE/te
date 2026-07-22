@@ -1,0 +1,501 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索来源模拟 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .simulator-grid {
+            display: grid;
+            grid-template-columns: minmax(260px, 1fr) 220px;
+            gap: 18px;
+            align-items: end;
+        }
+
+        .form-select,
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 15px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: #f9f9f9;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus,
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 96px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .engine-card-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .engine-card {
+            border: 1px solid #e8eaf2;
+            border-radius: 12px;
+            padding: 14px;
+            background: #fff;
+            color: #566573;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: center;
+            user-select: none;
+        }
+
+        .engine-card:hover,
+        .engine-card.active {
+            transform: translateY(-2px);
+            border-color: #667eea;
+            box-shadow: 0 8px 18px rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .engine-card i {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 14px 22px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+        }
+
+        .action-btn.primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .action-btn.success { background: linear-gradient(135deg, #00b09b, #96c93d); }
+        .action-btn.info { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .action-btn.gray { background: #95a5a6; }
+
+        .result-panel {
+            display: none;
+            margin-top: 22px;
+            padding: 22px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8f9ff, #eef2ff);
+            border: 1px solid #dfe5ff;
+        }
+
+        .result-panel.visible { display: block; }
+
+        .result-item {
+            margin: 12px 0;
+            padding: 14px 16px;
+            border-radius: 8px;
+            background: #fff;
+            border-left: 4px solid #667eea;
+            color: #2c3e50;
+        }
+
+        .result-item strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #667eea;
+        }
+
+        .mono {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .tip-box {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 10px;
+            background: #fff8e1;
+            color: #795548;
+            border: 1px solid #ffe0a3;
+            line-height: 1.7;
+        }
+
+        .host-code {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 9999;
+            padding: 12px 18px;
+            border-radius: 8px;
+            color: #fff;
+            background: rgba(44, 62, 80, 0.92);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+            opacity: 0;
+            transform: translateY(12px);
+            transition: all 0.25s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 900px) {
+            .simulator-grid { grid-template-columns: 1fr; }
+            .action-btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-magnifying-glass-location"></i> 搜索来源模拟</h1>
+        <p>输入要访问的页面地址并选择搜索引擎，工具会先打开对应搜索引擎域名下的本机中间模拟页，再由中间页跳转到你输入的目标页面，避免从工具页直接打开目标 URL。</p>
+    </div>
+
+    <div class="function-card">
+        <h2><i class="fas fa-route"></i> 模拟配置</h2>
+        <div class="simulator-grid">
+            <div class="input-group" style="margin-bottom: 0;">
+                <label for="targetUrl">页面访问信息 / 目标页面 URL</label>
+                <input id="targetUrl" class="form-input" type="text" placeholder="例如：https://www.example.com/landing?page=demo" autocomplete="off" autofocus>
+            </div>
+            <div class="input-group" style="margin-bottom: 0;">
+                <label for="engineSelect">搜索引擎</label>
+                <select id="engineSelect" class="form-select">
+                    <option value="baidu">Baidu</option>
+                    <option value="bing">Bing</option>
+                    <option value="360">360</option>
+                    <option value="sogou">搜狗</option>
+                    <option value="google">Google</option>
+                    <option value="other">其他类型</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="engine-card-row" id="engineCards"></div>
+
+        <div id="otherReferrerWrap" class="input-group" style="display:none; margin-top: 20px; margin-bottom: 0;">
+            <label for="otherReferrer">自定义 referrer</label>
+            <textarea id="otherReferrer" class="form-textarea" placeholder="请输入自定义 document.referrer，例如：https://example.com/search?q=test"></textarea>
+        </div>
+
+        <div class="action-row">
+            <button type="button" class="action-btn primary" id="generateBtn"><i class="fas fa-wand-magic-sparkles"></i> 生成模拟来源</button>
+            <button type="button" class="action-btn success" id="openSimBtn"><i class="fas fa-window-restore"></i> 打开中间模拟页</button>
+            <button type="button" class="action-btn info" id="copyRefBtn"><i class="fas fa-copy"></i> 复制 referrer</button>
+            <button type="button" class="action-btn gray" id="clearBtn"><i class="fas fa-broom"></i> 清空</button>
+        </div>
+
+        <div class="tip-box">
+            <strong><i class="fas fa-circle-info"></i> 使用说明：</strong>
+            <div style="margin-top: 8px;">
+                1. 确保本机 hosts 已配置你要模拟的搜索引擎域名，例如：<br>
+                <code class="mono" style="display: block; background: rgba(0,0,0,0.05); padding: 8px; margin: 6px 0; border-radius: 6px; font-size: 0.9rem;">127.0.0.1 www.baidu.com so.360.cn www.sogou.com cn.bing.com google.test search.test</code>
+                2. 输入目标页面 URL，选择搜索引擎，点击 <strong>生成模拟来源</strong>。<br>
+                3. 点击 <strong>打开中间模拟页</strong>，会先进入对应搜索引擎域名下的本机中间页，例如 <code>http://so.360.cn:5000/referrer_source?...</code>。<br>
+                4. 中间页会自动跳转到你输入的目标页面；目标页面读取到的 <code>document.referrer</code> 会是该中间页 URL，并可从其中的 <code>engine</code> / <code>search_referrer</code> 参数识别搜索引擎。
+                <br><strong>注意：</strong><code>www.baidu.com</code> / <code>cn.bing.com</code> 这类真实域名可能被浏览器 HSTS 强制升级到 HTTPS，导致本机 HTTP 服务无法访问；360、搜狗等未被强制 HTTPS 的域名通常可以使用。
+            </div>
+        </div>
+    </div>
+
+    <div class="function-card">
+        <h2><i class="fas fa-file-code"></i> 生成结果</h2>
+        <div id="resultPanel" class="result-panel">
+            <div class="result-item">
+                <strong>目标页面 URL</strong>
+                <div id="targetResult" class="mono">--</div>
+            </div>
+            <div class="result-item">
+                <strong>模拟 document.referrer</strong>
+                <div id="referrerResult" class="mono">--</div>
+            </div>
+            <div class="result-item">
+                <strong>目标页面可用测试代码</strong>
+                <div id="snippetResult" class="mono">--</div>
+            </div>
+        </div>
+        <div id="emptyResult" class="placeholder" style="padding: 45px 20px;">
+            <i class="fas fa-magnifying-glass"></i>
+            <h3>暂无模拟结果</h3>
+            <p>填写目标地址并选择搜索引擎后，点击“生成模拟来源”。</p>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    const defaultKeyword = '雷神加速器';
+
+    const engineDomains = {
+        baidu: 'www.baidu.com',
+        bing: 'cn.bing.com',
+        '360': 'so.360.cn',
+        sogou: 'www.sogou.com',
+        google: 'google.test',
+        other: 'search.test'
+    };
+
+    function buildSearchKeyword(url) {
+        try {
+            const parsed = new URL(url);
+            return parsed.hostname.replace(/^www\./i, '') || url || defaultKeyword;
+        } catch (e) {
+            return url || defaultKeyword;
+        }
+    }
+
+    function buildSimulatedUrl(engineKey, targetUrl) {
+        const domain = engineDomains[engineKey] || engineDomains.other;
+        const protocol = window.location.protocol;
+        const port = window.location.port;
+        const portStr = port ? `:${port}` : '';
+        let searchReferrer = '';
+        const keyword = encodeURIComponent(buildSearchKeyword(targetUrl));
+        if (engineKey === 'baidu') {
+            searchReferrer = `https://www.baidu.com/s?wd=${keyword}`;
+        } else if (engineKey === 'bing') {
+            searchReferrer = `https://www.bing.com/search?q=${keyword}`;
+        } else if (engineKey === '360') {
+            searchReferrer = `https://www.so.com/s?q=${keyword}`;
+        } else if (engineKey === 'sogou') {
+            searchReferrer = `https://www.sogou.com/web?query=${keyword}`;
+        } else if (engineKey === 'google') {
+            searchReferrer = `https://www.google.com/search?q=${keyword}`;
+        } else {
+            searchReferrer = document.getElementById('otherReferrer').value.trim() || 'https://example.com/search?q=custom';
+        }
+        
+        const params = new URLSearchParams();
+        params.set('engine', engineKey);
+        params.set('target', targetUrl);
+        params.set('search_referrer', searchReferrer);
+        
+        return `${protocol}//${domain}${portStr}/referrer_source?${params.toString()}`;
+    }
+
+    const engines = {
+        baidu: {
+            name: 'Baidu', icon: 'fa-brands fa-baidu',
+            build: (url) => buildSimulatedUrl('baidu', url)
+        },
+        bing: {
+            name: 'Bing', icon: 'fa-brands fa-microsoft',
+            build: (url) => buildSimulatedUrl('bing', url)
+        },
+        '360': {
+            name: '360', icon: 'fas fa-shield-halved',
+            build: (url) => buildSimulatedUrl('360', url)
+        },
+        sogou: {
+            name: '搜狗', icon: 'fas fa-dog',
+            build: (url) => buildSimulatedUrl('sogou', url)
+        },
+        google: {
+            name: 'Google', icon: 'fa-brands fa-google',
+            build: (url) => buildSimulatedUrl('google', url)
+        },
+        other: {
+            name: '其他', icon: 'fas fa-ellipsis',
+            build: (url) => buildSimulatedUrl('other', url)
+        }
+    };
+
+    const els = {
+        targetUrl: document.getElementById('targetUrl'),
+        engineSelect: document.getElementById('engineSelect'),
+        engineCards: document.getElementById('engineCards'),
+        otherReferrerWrap: document.getElementById('otherReferrerWrap'),
+        otherReferrer: document.getElementById('otherReferrer'),
+        resultPanel: document.getElementById('resultPanel'),
+        emptyResult: document.getElementById('emptyResult'),
+        targetResult: document.getElementById('targetResult'),
+        referrerResult: document.getElementById('referrerResult'),
+        snippetResult: document.getElementById('snippetResult'),
+        generateBtn: document.getElementById('generateBtn'),
+        openSimBtn: document.getElementById('openSimBtn'),
+        copyRefBtn: document.getElementById('copyRefBtn'),
+        clearBtn: document.getElementById('clearBtn'),
+        toast: document.getElementById('toast')
+    };
+
+    let latestResult = null;
+
+    function normalizeUrl(value) {
+        const trimmed = (value || '').trim();
+        if (!trimmed) return '';
+        if (/^https?:\/\//i.test(trimmed)) return trimmed;
+        if (/^(localhost|127\.0\.0\.1)/i.test(trimmed)) {
+            return `http://${trimmed}`;
+        }
+        return `https://${trimmed}`;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function showToast(message) {
+        els.toast.textContent = message;
+        els.toast.classList.add('show');
+        setTimeout(() => els.toast.classList.remove('show'), 1800);
+    }
+
+    function renderEngineCards() {
+        els.engineCards.innerHTML = Object.entries(engines).map(([key, engine]) => `
+            <div class="engine-card" data-engine="${key}">
+                <i class="${engine.icon}"></i>
+                <span>${engine.name}</span>
+            </div>
+        `).join('');
+
+        els.engineCards.querySelectorAll('.engine-card').forEach(card => {
+            card.addEventListener('click', () => {
+                els.engineSelect.value = card.dataset.engine;
+                updateEngineUI();
+                generateResult(false);
+            });
+        });
+        updateEngineUI();
+    }
+
+    function updateEngineUI() {
+        const current = els.engineSelect.value;
+        els.engineCards.querySelectorAll('.engine-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.engine === current);
+        });
+        els.otherReferrerWrap.style.display = current === 'other' ? 'block' : 'none';
+    }
+
+    function generateResult(showMessage = true) {
+        const target = normalizeUrl(els.targetUrl.value);
+        const engine = engines[els.engineSelect.value] || engines.baidu;
+        
+        if (!target) {
+            els.targetUrl.focus();
+            if (showMessage) showToast('请先输入目标页面 URL');
+            return null;
+        }
+
+        const referrer = engine.build(target);
+        latestResult = { target, referrer, engine: els.engineSelect.value };
+        const snippet = `const ref = document.referrer;\nconsole.log('document.referrer =', ref);\n// 工具会先打开本机中间模拟页：\n${referrer}\n// 中间页再跳转到你输入的目标页：\n${target}\n// 目标页可以从 document.referrer 的 engine/search_referrer 参数识别搜索引擎`;
+
+        els.targetResult.textContent = target;
+        els.referrerResult.textContent = referrer;
+        els.snippetResult.textContent = snippet;
+        els.resultPanel.classList.add('visible');
+        els.emptyResult.style.display = 'none';
+
+        if (showMessage) showToast('模拟来源已生成');
+        return latestResult;
+    }
+
+    async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+
+    function openSimulatedLandingPage() {
+        const result = latestResult || generateResult(false);
+        if (!result) return;
+        window.open(result.referrer, '_blank');
+    }
+
+    els.engineSelect.addEventListener('change', () => {
+        updateEngineUI();
+        generateResult(false);
+    });
+    els.generateBtn.addEventListener('click', () => generateResult(true));
+    els.openSimBtn.addEventListener('click', openSimulatedLandingPage);
+    els.copyRefBtn.addEventListener('click', async () => {
+        const result = latestResult || generateResult(false);
+        if (!result) return;
+        await copyText(result.referrer);
+        showToast('referrer 已复制');
+    });
+    els.clearBtn.addEventListener('click', () => {
+        els.targetUrl.value = '';
+        els.otherReferrer.value = '';
+        latestResult = null;
+        els.resultPanel.classList.remove('visible');
+        els.emptyResult.style.display = 'block';
+        els.targetUrl.focus();
+        showToast('已清空');
+    });
+    els.targetUrl.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            generateResult(true);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderEngineCards();
+        els.otherReferrer.value = 'https://example.com/search?q=leigod';
+    });
+</script>
+</body>
+</html>

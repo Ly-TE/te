@@ -1,0 +1,20 @@
+/data/release_process_config.json
+/current_mobile_num.json
+__pycache__/
+*.py[cod]
+.idea/
+*.pid
+/api/1.txt
+# Local secrets and generated files
+.env
+.env.*
+!.env.example
+certs/
+logs/
+*.log
+__pycache__/
+*.py[cod]
+.idea/
+data/release_process_config.json
+venv/
+.venv/

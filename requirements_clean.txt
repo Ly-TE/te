@@ -1,0 +1,13 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+PyMySQL==1.1.0
+DBUtils==3.0.2
+python-dotenv==1.0.0
+requests==2.31.0
+pycryptodome==3.19.0
+pydantic==2.4.2
+psutil==5.9.5
+python-dateutil==2.8.2
+PyYAML==6.0.1
+orjson==3.9.10
+werkzeug==3.0.1

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档在线查阅 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        .viewer-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #8e44ad;
+        }
+        .viewer-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .viewer-header i {
+            font-size: 24px;
+            color: #8e44ad;
+        }
+        .viewer-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .upload-zone {
+            border: 2px dashed #b8a4d8;
+            border-radius: 12px;
+            padding: 36px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #fbf9ff, #f4f8ff);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #8e44ad;
+            background: linear-gradient(135deg, #f2eaff, #eaf4ff);
+            transform: translateY(-2px);
+        }
+        .upload-zone .upload-icon {
+            font-size: 46px;
+            color: #8e44ad;
+            margin-bottom: 12px;
+        }
+        .upload-zone h3 {
+            margin: 8px 0;
+            color: #2c3e50;
+        }
+        .upload-zone p {
+            margin: 6px 0;
+            color: #7f8c8d;
+            line-height: 1.7;
+        }
+        .file-input {
+            display: none;
+        }
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+            color: white;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .file-summary {
+            display: none;
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+        }
+        .file-summary.visible {
+            display: block;
+        }
+        .file-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+        }
+        .file-summary-item {
+            padding: 10px 12px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #8e44ad;
+            color: #566573;
+            word-break: break-all;
+        }
+        .file-summary-item strong {
+            color: #2c3e50;
+        }
+        .status-message {
+            display: none;
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            line-height: 1.6;
+        }
+        .status-message.visible {
+            display: block;
+        }
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .preview-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        .preview-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .preview-toolbar h3 {
+            margin: 0;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .preview-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .preview-area {
+            min-height: 460px;
+            max-height: 75vh;
+            overflow: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f8f9fa;
+            padding: 18px;
+        }
+        .preview-placeholder {
+            height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: #95a5a6;
+            text-align: center;
+        }
+        .preview-placeholder i {
+            font-size: 58px;
+            margin-bottom: 18px;
+            color: #bdc3c7;
+        }
+        .text-preview {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #2c3e50;
+            background: white;
+            padding: 18px;
+            border-radius: 6px;
+            min-height: 380px;
+        }
+        .image-preview-wrap {
+            text-align: center;
+            background: white;
+            padding: 18px;
+            border-radius: 6px;
+        }
+        .image-preview-wrap img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.12);
+        }
+        .word-preview {
+            background: white;
+            padding: 26px;
+            border-radius: 6px;
+            color: #2c3e50;
+            line-height: 1.8;
+        }
+        .word-preview img {
+            max-width: 100%;
+        }
+        .word-preview table {
+            border-collapse: collapse;
+            max-width: 100%;
+            margin: 12px 0;
+        }
+        .word-preview td,
+        .word-preview th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .hint-box {
+            margin-top: 18px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #eef2ff, #f5f7ff);
+            border-radius: 10px;
+            border: 1px solid #dfe5ff;
+            color: #566573;
+            line-height: 1.8;
+        }
+        @media (max-width: 768px) {
+            .viewer-section,
+            .preview-card {
+                padding: 18px;
+            }
+            .preview-area {
+                min-height: 360px;
+                padding: 12px;
+            }
+            .button-row .btn,
+            .preview-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-file-alt"></i> 文档在线查阅</h1>
+        <p>上传本地文档进行在线预览，支持 TXT、PNG 图片、Word 文档（.docx 优先）。文件仅在浏览器本地解析，不会上传到服务器。</p>
+    </div>
+
+    <div class="viewer-section">
+        <div class="viewer-header">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>上传文档</h3>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon"><i class="fas fa-file-upload"></i></div>
+            <h3>点击选择文件，或将文件拖拽到这里</h3>
+            <p>支持格式：<strong>.txt</strong>、<strong>.png</strong>、<strong>.docx</strong>、<strong>.doc</strong></p>
+            <p>建议 Word 文档使用 .docx 格式，浏览器可直接解析并展示正文内容。</p>
+        </div>
+        <input id="fileInput" class="file-input" type="file" accept=".txt,.png,.doc,.docx,text/plain,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+
+        <div class="button-row">
+            <button class="btn btn-primary" id="selectFileBtn"><i class="fas fa-folder-open"></i> 选择文件</button>
+            <button class="btn btn-success" id="downloadBtn" disabled><i class="fas fa-download"></i> 下载原文件</button>
+            <button class="btn btn-warning" id="copyTextBtn" disabled><i class="fas fa-copy"></i> 复制文本</button>
+            <button class="btn btn-secondary" id="clearBtn"><i class="fas fa-trash-alt"></i> 清空</button>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div id="fileSummary" class="file-summary">
+            <div class="file-summary-grid">
+                <div class="file-summary-item"><strong>文件名：</strong><span id="summaryName">--</span></div>
+                <div class="file-summary-item"><strong>文件类型：</strong><span id="summaryType">--</span></div>
+                <div class="file-summary-item"><strong>文件大小：</strong><span id="summarySize">--</span></div>
+                <div class="file-summary-item"><strong>最后修改：</strong><span id="summaryModified">--</span></div>
+            </div>
+        </div>
+
+        <div class="hint-box">
+            <strong><i class="fas fa-lightbulb"></i> 使用说明：</strong>
+            <ul style="margin: 8px 0 0 20px; padding: 0;">
+                <li>TXT 会以纯文本方式预览，并尽量自动识别 UTF-8/GBK 编码。</li>
+                <li>PNG 会以图片方式预览，可在预览区滚动查看大图。</li>
+                <li>DOCX 使用浏览器端 Mammoth 解析为 HTML；老式 DOC 格式受浏览器限制，页面会提供下载和转换提示。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="preview-card">
+        <div class="preview-toolbar">
+            <h3><i class="fas fa-eye"></i> 在线预览</h3>
+            <div class="preview-actions">
+                <button class="btn btn-primary" id="openBlobBtn" disabled><i class="fas fa-external-link-alt"></i> 新窗口打开</button>
+            </div>
+        </div>
+        <div id="previewArea" class="preview-area">
+            <div class="preview-placeholder">
+                <i class="fas fa-file-import"></i>
+                <h3>暂无预览内容</h3>
+                <p>请选择或拖入 txt、png、word 文档开始查阅。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const copyTextBtn = document.getElementById('copyTextBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const openBlobBtn = document.getElementById('openBlobBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const fileSummary = document.getElementById('fileSummary');
+    const previewArea = document.getElementById('previewArea');
+
+    let currentFile = null;
+    let currentObjectUrl = '';
+    let copyableText = '';
+
+    function showMessage(message, type = 'info') {
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message visible ${type}`;
+    }
+
+    function hideMessage() {
+        statusMessage.className = 'status-message';
+        statusMessage.textContent = '';
+    }
+
+    function formatFileSize(bytes) {
+        if (!bytes) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 2)} ${units[index]}`;
+    }
+
+    function getExtension(fileName) {
+        return (fileName.split('.').pop() || '').toLowerCase();
+    }
+
+    function revokeCurrentUrl() {
+        if (currentObjectUrl) {
+            URL.revokeObjectURL(currentObjectUrl);
+            currentObjectUrl = '';
+        }
+    }
+
+    function updateSummary(file) {
+        document.getElementById('summaryName').textContent = file.name;
+        document.getElementById('summaryType').textContent = file.type || `.${getExtension(file.name)}`;
+        document.getElementById('summarySize').textContent = formatFileSize(file.size);
+        document.getElementById('summaryModified').textContent = file.lastModified ? new Date(file.lastModified).toLocaleString() : '--';
+        fileSummary.classList.add('visible');
+    }
+
+    function setPreviewPlaceholder(title = '暂无预览内容', text = '请选择或拖入 txt、png、word 文档开始查阅。') {
+        previewArea.innerHTML = `
+            <div class="preview-placeholder">
+                <i class="fas fa-file-import"></i>
+                <h3>${title}</h3>
+                <p>${text}</p>
+            </div>
+        `;
+    }
+
+    async function readTextWithFallback(file) {
+        const buffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+            return new TextDecoder('utf-8').decode(bytes);
+        }
+
+        const utf8Text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+        const replacementCount = (utf8Text.match(/�/g) || []).length;
+
+        if (replacementCount > Math.max(3, utf8Text.length * 0.01)) {
+            try {
+                return new TextDecoder('gb18030', { fatal: false }).decode(bytes);
+            } catch (error) {
+                return utf8Text;
+            }
+        }
+        return utf8Text;
+    }
+
+    async function previewTxt(file) {
+        const text = await readTextWithFallback(file);
+        copyableText = text;
+        copyTextBtn.disabled = !text;
+        previewArea.innerHTML = `<div class="text-preview"></div>`;
+        previewArea.querySelector('.text-preview').textContent = text || '（空文件）';
+        showMessage('TXT 文档已加载完成。', 'success');
+    }
+
+    function previewPng(file) {
+        currentObjectUrl = URL.createObjectURL(file);
+        copyableText = '';
+        copyTextBtn.disabled = true;
+        openBlobBtn.disabled = false;
+        previewArea.innerHTML = `
+            <div class="image-preview-wrap">
+                <img src="${currentObjectUrl}" alt="${file.name}">
+            </div>
+        `;
+        showMessage('PNG 图片已加载完成。', 'success');
+    }
+
+    async function previewDocx(file) {
+        if (!window.mammoth) {
+            throw new Error('Word 解析组件加载失败，请检查网络或稍后重试。');
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        const textResult = await mammoth.extractRawText({ arrayBuffer });
+        copyableText = textResult.value || '';
+        copyTextBtn.disabled = !copyableText;
+
+        previewArea.innerHTML = `<div class="word-preview">${result.value || '<p>未解析到可展示内容。</p>'}</div>`;
+
+        if (result.messages && result.messages.length) {
+            showMessage(`DOCX 文档已加载完成。部分复杂样式可能无法完全还原（${result.messages.length} 条解析提示）。`, 'info');
+        } else {
+            showMessage('DOCX 文档已加载完成。', 'success');
+        }
+    }
+
+    function previewDoc(file) {
+        currentObjectUrl = URL.createObjectURL(file);
+        copyableText = '';
+        copyTextBtn.disabled = true;
+        openBlobBtn.disabled = false;
+        previewArea.innerHTML = `
+            <div class="preview-placeholder">
+                <i class="fas fa-file-word"></i>
+                <h3>当前浏览器无法直接解析 .doc 老式 Word 文档</h3>
+                <p>请点击“下载原文件”后用 Word/WPS 打开，或将文档另存为 .docx 后重新上传进行在线预览。</p>
+            </div>
+        `;
+        showMessage('已识别 DOC 文件。由于 .doc 是老式二进制格式，浏览器端无法可靠解析，建议转换为 .docx。', 'info');
+    }
+
+    async function handleFile(file) {
+        if (!file) return;
+
+        revokeCurrentUrl();
+        hideMessage();
+        currentFile = file;
+        copyableText = '';
+        downloadBtn.disabled = false;
+        copyTextBtn.disabled = true;
+        openBlobBtn.disabled = true;
+        updateSummary(file);
+        setPreviewPlaceholder('正在解析文件...', '请稍候，正在读取本地文件内容。');
+
+        const ext = getExtension(file.name);
+        const type = file.type;
+
+        try {
+            if (ext === 'txt' || type.startsWith('text/')) {
+                await previewTxt(file);
+            } else if (ext === 'png' || type === 'image/png') {
+                previewPng(file);
+            } else if (ext === 'docx') {
+                await previewDocx(file);
+            } else if (ext === 'doc') {
+                previewDoc(file);
+            } else {
+                currentFile = null;
+                downloadBtn.disabled = true;
+                fileSummary.classList.remove('visible');
+                setPreviewPlaceholder('暂不支持该格式', '请上传 txt、png、docx 或 doc 文件。');
+                showMessage('暂不支持该文件格式，请选择 txt、png、docx 或 doc 文件。', 'error');
+            }
+        } catch (error) {
+            setPreviewPlaceholder('文件解析失败', error.message);
+            showMessage(`文件解析失败：${error.message}`, 'error');
+        }
+    }
+
+    function downloadCurrentFile() {
+        if (!currentFile) return;
+        const url = URL.createObjectURL(currentFile);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = currentFile.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    async function copyPreviewText() {
+        if (!copyableText) {
+            showMessage('当前文件没有可复制的文本内容。', 'error');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(copyableText);
+            showMessage('文本内容已复制到剪贴板。', 'success');
+        } catch (error) {
+            const textarea = document.createElement('textarea');
+            textarea.value = copyableText;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showMessage('文本内容已复制到剪贴板。', 'success');
+        }
+    }
+
+    function openCurrentFile() {
+        if (!currentFile) return;
+        if (!currentObjectUrl) {
+            currentObjectUrl = URL.createObjectURL(currentFile);
+        }
+        window.open(currentObjectUrl, '_blank');
+    }
+
+    function clearAll() {
+        revokeCurrentUrl();
+        currentFile = null;
+        copyableText = '';
+        fileInput.value = '';
+        fileSummary.classList.remove('visible');
+        downloadBtn.disabled = true;
+        copyTextBtn.disabled = true;
+        openBlobBtn.disabled = true;
+        hideMessage();
+        setPreviewPlaceholder();
+    }
+
+    selectFileBtn.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
+    downloadBtn.addEventListener('click', downloadCurrentFile);
+    copyTextBtn.addEventListener('click', copyPreviewText);
+    openBlobBtn.addEventListener('click', openCurrentFile);
+    clearBtn.addEventListener('click', clearAll);
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            uploadZone.classList.add('dragover');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            uploadZone.classList.remove('dragover');
+        });
+    });
+
+    uploadZone.addEventListener('drop', (event) => {
+        const file = event.dataTransfer.files && event.dataTransfer.files[0];
+        handleFile(file);
+    });
+
+    document.addEventListener('dragover', (event) => event.preventDefault());
+    document.addEventListener('drop', (event) => event.preventDefault());
+
+    window.addEventListener('beforeunload', revokeCurrentUrl);
+</script>
+</body>
+</html>

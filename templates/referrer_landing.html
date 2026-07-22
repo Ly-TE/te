@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索来源落地页 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .landing-card { max-width: 980px; }
+        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
+        .status-box { padding: 18px; border-radius: 12px; background: linear-gradient(135deg, #f8f9ff, #eef2ff); border: 1px solid #dfe5ff; }
+        .status-box strong { display: block; color: #667eea; margin-bottom: 8px; }
+        .engine-name { font-size: 1.4rem; font-weight: 800; color: #2c3e50; }
+        .mono { font-family: Consolas, Monaco, 'Courier New', monospace; word-break: break-all; white-space: pre-wrap; }
+        .tip-box { margin-top: 18px; padding: 16px 18px; border-radius: 10px; background: #fff8e1; color: #795548; border: 1px solid #ffe0a3; line-height: 1.7; }
+        .action-btn { display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 10px; padding: 12px 18px; color: #fff; background: linear-gradient(135deg, #667eea, #764ba2); text-decoration: none; font-weight: 700; margin-top: 12px; }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-location-dot"></i> 搜索来源落地页</h1>
+        <p>这是实际存在的落地页，会直接读取 <code>document.referrer</code>，并根据来源展示对应的搜索引擎。</p>
+    </div>
+
+    <div class="function-card landing-card">
+        <h2><i class="fas fa-magnifying-glass-chart"></i> 来源识别结果</h2>
+        <div class="status-grid">
+            <div class="status-box">
+                <strong>识别到的搜索引擎</strong>
+                <div id="engineName" class="engine-name">识别中...</div>
+            </div>
+            <div class="status-box">
+                <strong>目标页面 URL</strong>
+                <div id="targetUrl" class="mono">--</div>
+            </div>
+        </div>
+
+        <div class="status-box">
+            <strong>当前页面真实 document.referrer</strong>
+            <div id="realReferrer" class="mono">--</div>
+        </div>
+
+        <div class="status-box" style="margin-top: 14px;">
+            <strong>搜索引擎 referrer 信息</strong>
+            <div id="searchReferrer" class="mono">--</div>
+        </div>
+
+        <div class="tip-box">
+            <strong><i class="fas fa-circle-info"></i> 说明：</strong>
+            本页面没有覆盖 <code>document.referrer</code>，而是读取浏览器提供的真实值。模拟器会先打开一个实际存在的“模拟搜索引擎页”，再由该页面使用新页签打开本落地页；本页面从真实 <code>document.referrer</code> 指向的模拟搜索页参数中还原并展示对应搜索引擎。
+        </div>
+
+        <a class="action-btn" href="/referrer_simulator.html"><i class="fas fa-arrow-left"></i> 返回搜索来源模拟</a>
+    </div>
+</div>
+
+<script>
+    const engineNames = {
+        baidu: 'Baidu',
+        bing: 'Bing',
+        '360': '360',
+        sogou: '搜狗',
+        google: 'Google',
+        other: '其他类型'
+    };
+
+    function detectEngineFromUrl(value) {
+        const url = String(value || '').toLowerCase();
+        if (url.includes('baidu.com') || url.includes('www.baidu.com')) return 'baidu';
+        if (url.includes('cn.bing.com') || url.includes('bing.com')) return 'bing';
+        if (url.includes('so.360.cn') || url.includes('so.com') || url.includes('360.cn')) return '360';
+        if (url.includes('www.sogou.com') || url.includes('sogou.com')) return 'sogou';
+        if (url.includes('google.')) return 'google';
+        return url ? 'other' : '';
+    }
+
+    function getParamsFromReferrer() {
+        try {
+            return new URL(document.referrer).searchParams;
+        } catch (e) {
+            return new URLSearchParams();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentParams = new URLSearchParams(window.location.search);
+        const directTarget = currentParams.get('target') || '';
+
+        if (directTarget && /^https?:\/\//i.test(directTarget)) {
+            window.location.replace(directTarget);
+            return;
+        }
+
+        const referrerParams = getParamsFromReferrer();
+        const searchReferrer = referrerParams.get('search_referrer') || currentParams.get('search_referrer') || '';
+        const engineKey = referrerParams.get('engine') || currentParams.get('engine') || detectEngineFromUrl(searchReferrer);
+        const target = directTarget || referrerParams.get('target') || window.location.href;
+
+        document.getElementById('engineName').textContent = engineNames[engineKey] || '未知来源';
+        document.getElementById('targetUrl').textContent = target;
+        document.getElementById('realReferrer').textContent = document.referrer || '(空，可能是直接打开或浏览器策略限制)';
+        document.getElementById('searchReferrer').textContent = searchReferrer || '(未获取到搜索引擎 referrer 参数)';
+
+        console.log('document.referrer =', document.referrer);
+        console.log('识别搜索引擎 =', engineNames[engineKey] || '未知来源');
+        console.log('搜索引擎 referrer 信息 =', searchReferrer);
+    });
+</script>
+</body>
+</html>

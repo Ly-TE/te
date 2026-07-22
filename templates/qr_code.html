@@ -1,0 +1,403 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码工具 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous">
+    <style>
+        .tool-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        .tool-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .tool-header i {
+            font-size: 24px;
+            color: #3498db;
+            margin-right: 15px;
+        }
+        .tool-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: stretch;
+        }
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        .prefix-select {
+            padding: 0 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f8f9fa;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            white-space: nowrap;
+            flex-shrink: 0;
+            height: auto;
+            appearance: none;
+            -webkit-appearance: none;
+            padding-right: 28px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232c3e50' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+        }
+        .prefix-select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            background-color: #fff;
+        }
+        .prefix-select:hover {
+            border-color: #3498db;
+            background-color: #fff;
+        }
+        .text-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .text-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .qr-image {
+            max-width: 200px;
+            max-height: 200px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            display: none;
+        }
+        .decode-result-text {
+            font-family: monospace;
+            font-size: 16px;
+            color: #2c3e50;
+            word-break: break-all;
+            margin-top: 15px;
+            padding: 15px;
+            background: #eafaf1;
+            border: 1px solid #2ecc71;
+            border-radius: 6px;
+            display: none;
+            width: 100%;
+            text-align: left;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        /* 确保文件上传按钮与其他按钮大小一致 */
+        .file-input-wrapper .btn {
+            padding: 20px 20px;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        .error-message {
+            display: none;
+            background: #fdedec;
+            border: 1px solid #e74c3c;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #c0392b;
+            text-align: left;
+            width: 100%;
+        }
+        .error-message.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-qrcode"></i> 二维码工具</h1>
+        <p>快速生成不同样式二维码，或解析提取二维码内容</p>
+        <div style="margin-top: 15px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="#generate-section" class="btn btn-primary"><i class="fas fa-magic"></i> 生成二维码</a>
+            <a href="#decode-section" class="btn btn-success"><i class="fas fa-search"></i> 解码二维码</a>
+        </div>
+    </div>
+
+    <div class="tool-section" id="generate-section">
+        <div class="tool-header">
+            <i class="fas fa-magic"></i>
+            <h3>生成二维码</h3>
+        </div>
+        <div class="input-group">
+            <select id="qrPrefix" class="prefix-select">
+                <option value="https://" selected>https://</option>
+                <option value="http://">http://</option>
+                <option value="ftp://">ftp://</option>
+                <option value="mailto:">mailto:</option>
+                <option value="tel:">tel:</option>
+                <option value="">（无前缀）</option>
+            </select>
+            <div class="input-wrapper">
+                <input type="text" id="qrTextToGenerate" class="text-input"
+                       placeholder="请输入要生成二维码的文本或链接"
+                       onkeydown="if(event.key==='Enter') generateQR()">
+            </div>
+            <button class="btn btn-primary" onclick="generateQR()">
+                <i class="fas fa-qrcode"></i> 生成
+            </button>
+        </div>
+        <div class="result-box">
+            <img id="generatedQrImg" class="qr-image" src="" alt="生成的二维码">
+            <p id="generatePlaceholder" style="color: #95a5a6;">二维码将在此处显示</p>
+        </div>
+    </div>
+
+    <div style="margin: 35px 0 15px; padding: 18px 22px; background: linear-gradient(135deg, #eafaf1, #d5f5e3); border-radius: 10px; border: 1px solid #abebc6;">
+        <h2 style="margin: 0 0 8px; color: #1e8449; font-size: 22px;">
+            <i class="fas fa-arrow-down"></i> 二维码解码入口
+        </h2>
+        <p style="margin: 0; color: #566573;">
+            在下方输入二维码图片链接，或点击“本地上传”选择图片，即可解析二维码内容。
+        </p>
+    </div>
+
+    <div class="tool-section" id="decode-section" style="border-left-color: #2ecc71; scroll-margin-top: 20px;">
+        <div class="tool-header">
+            <i class="fas fa-search" style="color: #2ecc71;"></i>
+            <h3>解码二维码</h3>
+        </div>
+        <div style="margin-bottom: 10px; color: #7f8c8d; font-size: 14px;">
+            可以输入网络图片 URL 解码。后端会调用：
+            <code>https://api.2dcode.biz/v1/read-qr-code?file_url=&lt;URLEncode后的图像文件URL&gt;</code>
+            ，避免浏览器跨域问题。
+        </div>
+
+        <div class="input-group">
+            <div class="input-wrapper">
+                <input type="text" id="qrImageUrl" class="text-input"
+                       placeholder="请输入二维码图片 URL，例如：https://example.com/qr.png"
+                       onkeydown="if(event.key==='Enter') decodeQRByUrl()">
+            </div>
+            <button id="decodeUrlBtn" class="btn btn-success" onclick="decodeQRByUrl()">
+                <i class="fas fa-link"></i> 链接解码
+            </button>
+            <div class="file-input-wrapper" title="可选：上传本地二维码图片解码">
+                <button id="decodeFileBtn" class="btn btn-info">
+                    <i class="fas fa-upload"></i> 本地上传
+                </button>
+                <input type="file" id="qrImageFile" accept="image/*" onchange="decodeQRByFile(event)">
+            </div>
+        </div>
+
+        <div class="result-box">
+            <div id="decodeError" class="error-message"></div>
+            <div id="decodeResult" class="decode-result-text"></div>
+            <p id="decodePlaceholder" style="color: #95a5a6;">解析结果将在此处显示</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateQR() {
+        const prefix = document.getElementById('qrPrefix').value;
+        const text = document.getElementById('qrTextToGenerate').value.trim();
+        if(!text) {
+            alert('请输入要生成的文本内容！');
+            return;
+        }
+        const fullText = prefix + text;
+        const imgEl = document.getElementById('generatedQrImg');
+        const placeholderEl = document.getElementById('generatePlaceholder');
+        
+        const url = `https://api.2dcode.biz/v1/create-qr-code?data=${encodeURIComponent(fullText)}&size=200x200`;
+        
+        imgEl.src = url;
+        imgEl.style.display = 'block';
+        placeholderEl.style.display = 'none';
+    }
+
+    async function decodeQRByUrl() {
+        const urlInput = document.getElementById('qrImageUrl').value.trim();
+        if(!urlInput) {
+            alert('请输入图片 URL!');
+            return;
+        }
+
+        resetDecodeResult();
+        setDecodeButtonsDisabled(true);
+        try {
+            // 由于 CORS 限制，需要通过后端代理
+            const response = await fetch(`/api/qr-decode?url=${encodeURIComponent(urlInput)}`, {
+                method: 'GET'
+            });
+            const data = await response.json();
+            handleDecodeResponse(data);
+        } catch (error) {
+            showDecodeError("请求失败：" + error.message);
+        } finally {
+            setDecodeButtonsDisabled(false);
+        }
+    }
+
+    async function decodeQRByFile(event) {
+        const file = event.target.files[0];
+        if(!file) return;
+            
+        const formData = new FormData();
+        formData.append('file', file);
+            
+        resetDecodeResult();
+        setDecodeButtonsDisabled(true);
+        try {
+            // 使用本地代理接口，避免 CORS 问题
+            const response = await fetch('/api/qr-decode', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            handleDecodeResponse(data);
+        } catch (error) {
+            showDecodeError("请求失败：" + error.message);
+        } finally {
+            setDecodeButtonsDisabled(false);
+        }
+            
+        // Reset file input
+        event.target.value = '';
+    }
+    
+    function resetDecodeResult() {
+        document.getElementById('decodeError').classList.remove('visible');
+        document.getElementById('decodeResult').style.display = 'none';
+        document.getElementById('decodePlaceholder').style.display = 'block';
+        document.getElementById('decodePlaceholder').textContent = '正在解析中...';
+    }
+    
+    function handleDecodeResponse(data) {
+        const contents = extractDecodeContents(data);
+        if(contents.length > 0) {
+            document.getElementById('decodePlaceholder').style.display = 'none';
+            const resultEl = document.getElementById('decodeResult');
+            resultEl.style.display = 'block';
+            resultEl.textContent = "解析成功，内容为:\n\n" + contents.join('\n');
+        } else {
+            const message = data && (data.error || data.message || data.msg);
+            showDecodeError(message || "解析失败或未在图片中找到二维码");
+        }
+    }
+
+    function extractDecodeContents(data) {
+        if(!data) return [];
+        if(data.code === 0 && data.data && Array.isArray(data.data.contents)) {
+            return data.data.contents.filter(Boolean);
+        }
+        if(data.data && Array.isArray(data.data)) {
+            return data.data.map(item => item && (item.text || item.content || item.data)).filter(Boolean);
+        }
+        if(Array.isArray(data.contents)) {
+            return data.contents.filter(Boolean);
+        }
+        if(data.content) return [data.content];
+        if(data.text) return [data.text];
+        return [];
+    }
+    
+    function showDecodeError(msg) {
+        document.getElementById('decodePlaceholder').style.display = 'none';
+        const errEl = document.getElementById('decodeError');
+        errEl.textContent = msg;
+        errEl.classList.add('visible');
+    }
+
+    function setDecodeButtonsDisabled(disabled) {
+        document.getElementById('decodeUrlBtn').disabled = disabled;
+        document.getElementById('decodeFileBtn').disabled = disabled;
+        document.getElementById('qrImageFile').disabled = disabled;
+    }
+</script>
+</body>
+</html>

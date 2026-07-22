@@ -1,0 +1,309 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雷神实名认证查询 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous">
+    <style>
+        .tool-section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        .tool-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .tool-header i {
+            font-size: 24px;
+            color: #667eea;
+            margin-right: 15px;
+        }
+        .tool-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .form-row {
+            margin-bottom: 18px;
+        }
+        .form-row label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .text-input,
+        .text-area {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .text-area {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        .text-input:focus,
+        .text-area:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+        }
+        .button-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 18px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .result-box {
+            margin-top: 15px;
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .hint-box {
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #eef2ff, #f5f7ff);
+            border-radius: 10px;
+            border: 1px solid #dfe5ff;
+            color: #566573;
+            line-height: 1.7;
+        }
+        .status-message {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+        .status-message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-id-card"></i> 雷神实名认证查询</h1>
+        <p>身份证实名认证相关数据加密/解密工具，使用 zlib + RC4 + Base64，默认密钥已内置</p>
+    </div>
+
+    <div class="tool-section">
+        <div class="tool-header">
+            <i class="fas fa-shield-alt"></i>
+            <h3>实名认证加解密</h3>
+        </div>
+
+        <div class="hint-box">
+            <strong>使用说明：</strong>输入明文后点击“加密”生成密文；输入密文后点击“解密”还原明文。
+            默认密钥已在服务端内置处理，页面不展示敏感配置。
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="form-row">
+            <label for="cryptoKey"><i class="fas fa-key"></i> 密钥</label>
+            <input id="cryptoKey" class="text-input" type="password" autocomplete="off"
+                   placeholder="可选：不填写则使用服务端内置默认密钥">
+        </div>
+
+        <div class="form-row">
+            <label for="inputText"><i class="fas fa-edit"></i> 输入内容</label>
+            <textarea id="inputText" class="text-area" placeholder="请输入需要加密的明文，或需要解密的 Base64 密文"></textarea>
+        </div>
+
+        <div class="button-row">
+            <button id="encryptBtn" class="btn btn-primary" onclick="encryptText()">
+                <i class="fas fa-lock"></i> 加密
+            </button>
+            <button id="decryptBtn" class="btn btn-success" onclick="decryptText()">
+                <i class="fas fa-lock-open"></i> 解密
+            </button>
+            <button class="btn btn-info" onclick="copyResult()">
+                <i class="fas fa-copy"></i> 复制结果
+            </button>
+            <button class="btn btn-warning" onclick="clearAll()">
+                <i class="fas fa-trash-alt"></i> 清空
+            </button>
+        </div>
+
+        <div class="result-box">
+            <div class="form-row" style="margin-bottom: 0;">
+                <label for="outputText"><i class="fas fa-list-alt"></i> 输出结果</label>
+                <textarea id="outputText" class="text-area" readonly placeholder="加密或解密结果将在此处显示"></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showMessage(message, type = 'success') {
+        const messageEl = document.getElementById('statusMessage');
+        messageEl.textContent = message;
+        messageEl.className = `status-message ${type}`;
+    }
+
+    function getRequestPayload() {
+        const text = document.getElementById('inputText').value;
+        const key = document.getElementById('cryptoKey').value.trim();
+
+        if (!text.trim()) {
+            showMessage('请输入需要处理的内容', 'error');
+            return null;
+        }
+
+        const payload = { text };
+        if (key) {
+            payload.key = key;
+        }
+        return payload;
+    }
+
+    async function callCryptoApi(url, resultField) {
+        const payload = getRequestPayload();
+        if (!payload) return;
+
+        setButtonsDisabled(true);
+        showMessage('正在处理，请稍候...', 'success');
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || data.message || '处理失败');
+            }
+
+            document.getElementById('outputText').value = data.data[resultField] || '';
+            showMessage('处理成功', 'success');
+        } catch (error) {
+            showMessage(`处理失败：${error.message}`, 'error');
+        } finally {
+            setButtonsDisabled(false);
+        }
+    }
+
+    function encryptText() {
+        callCryptoApi('/api/v1/real-name/encrypt', 'encrypted');
+    }
+
+    function decryptText() {
+        callCryptoApi('/api/v1/real-name/decrypt', 'decrypted');
+    }
+
+    function setButtonsDisabled(disabled) {
+        document.getElementById('encryptBtn').disabled = disabled;
+        document.getElementById('decryptBtn').disabled = disabled;
+    }
+
+    function copyResult() {
+        const result = document.getElementById('outputText').value;
+        if (!result) {
+            showMessage('没有可复制的结果', 'error');
+            return;
+        }
+
+        navigator.clipboard.writeText(result).then(() => {
+            showMessage('结果已复制到剪贴板', 'success');
+        }).catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = result;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showMessage('结果已复制到剪贴板', 'success');
+        });
+    }
+
+    function clearAll() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').value = '';
+        document.getElementById('statusMessage').className = 'status-message';
+        document.getElementById('statusMessage').textContent = '';
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.key.toLowerCase() === 'e') {
+            event.preventDefault();
+            encryptText();
+        }
+        if (event.ctrlKey && event.key.toLowerCase() === 'd') {
+            event.preventDefault();
+            decryptText();
+        }
+    });
+</script>
+</body>
+</html>

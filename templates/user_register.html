@@ -1,0 +1,1195 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>账号注册 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <noscript>
+        <style>
+            /* 当JavaScript被禁用或无法加载时的备用样式 */
+            .register-buttons, .result-display {
+                display: none;
+            }
+            .info-message {
+                display: block;
+                background: #f8d7da;
+                color: #721c24;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px;
+                border: 1px solid #f5c6cb;
+                text-align: center;
+            }
+        </style>
+    </noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        // 检测是否在IDE内置服务器或直接打开文件
+        if (window.location.protocol === 'file:' || 
+            window.location.hostname === 'localhost' && window.location.port === '63342') {
+            document.addEventListener('DOMContentLoaded', function() {
+                // 创建警告消息
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'info-message';
+                warningDiv.innerHTML = `
+                    <h3>⚠️ 重要提示</h3>
+                    <p>您正在直接打开HTML文件或使用IDE内置服务器。</p>
+                    <p>此页面需要通过Flask应用服务器运行才能正常工作。</p>
+                    <p>请启动Flask服务器（端口5000），然后通过 <code>http://127.0.0.1:5000/user_register</code> 访问此页面。</p>
+                    <p>静态资源（CSS/JS文件）将无法正确加载，功能将受限。</p>
+                `;
+                
+                // 插入到页面顶部
+                document.body.insertBefore(warningDiv, document.body.firstChild);
+                
+                // 隐藏主要功能区域
+                const registerSections = document.querySelectorAll('.register-section');
+                registerSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+            });
+        }
+    </script>
+    <style>
+        .register-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .register-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .register-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .register-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .register-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .register-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .register-btn.return-flow {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+        }
+
+        .register-btn.no-duration {
+            background: linear-gradient(135deg, #4ECDC4, #44A08D);
+            color: white;
+        }
+
+        .register-btn.activity-duration {
+            background: linear-gradient(135deg, #A8EDFA, #DEE4E7);
+            color: #333;
+        }
+
+        .result-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .status-message {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .query-btn {
+            margin-left: 10px;
+            padding: 2px 6px;
+            font-size: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .query-btn:hover {
+            background: #2980b9;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            max-width: 600px;
+            border-radius: 8px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .counter-display {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .quantity-control {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .input-group label {
+            font-size: 12px;
+            color: #555;
+            margin: 0;
+        }
+        
+        .count-input {
+            width: 80px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .count-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-user-plus"></i> 账号注册</h1>
+        <p>批量注册用户账号</p>
+    </div>
+
+    <div class="register-container">
+        <!-- 消息提示 -->
+        <div class="status-message" id="statusMessage"></div>
+
+        <div class="register-section">
+            <h3><i class="fas fa-users"></i> 账号注册功能</h3>
+
+            <div class="quantity-control">
+                <div class="input-group">
+                    <label for="registerCount">注册数量：</label>
+                    <input type="number" id="registerCount" class="count-input" value="1" min="1" max="100">
+                </div>
+            </div>
+
+            <div class="register-buttons">
+                <button class="register-btn return-flow" onclick="registerReturnFlowUser()">
+                    <i class="fas fa-redo"></i><br>
+                    <strong>回流用户</strong><br>
+                    注册账号并修改注册时间为30天前<br>
+                    设置为未付费用户
+                </button>
+
+                <button class="register-btn no-duration" onclick="registerNoDurationUser()">
+                    <i class="fas fa-user"></i><br>
+                    <strong>无时长用户</strong><br>
+                    注册账号
+                </button>
+
+                <button class="register-btn activity-duration" onclick="registerActivityDurationUser()">
+                    <i class="fas fa-gift"></i><br>
+                    <strong>有活动时长用户</strong><br>
+                    注册账号并赠送1小时不可暂停时长
+                </button>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-bar" id="progressBar" style="display: none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="counter-display" id="counterDisplay" style="display: none;"></div>
+
+            <!-- 结果展示 -->
+            <div class="result-display" id="resultDisplay">
+                <h4><i class="fas fa-list"></i> 注册结果</h4>
+                <div id="resultContent">等待操作...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 引入统一Token管理模块 -->
+<script src="/static/js/token-manager.js?v={{ timestamp }}"></script>
+<script>
+    // 使用统一token管理器
+    const unifiedTokenManager = window.tokenManager;
+    
+    // 确保token manager存在
+    if (!unifiedTokenManager) {
+        console.error('Token Manager 未加载，请确保 token-manager.js 正确加载');
+    }
+    let accountToken = '';
+    let currentMobileNum = 19800000000; // 起始手机号
+
+    // 显示消息
+    function showMessage(message, type = 'info') {
+        const msgEl = document.getElementById('statusMessage');
+        msgEl.textContent = message;
+        msgEl.className = `status-message ${type}`;
+        msgEl.style.display = 'block';
+
+        setTimeout(() => {
+            msgEl.style.display = 'none';
+        }, 5000);
+    }
+
+    // 显示Toast消息
+    function showToast(message, type = 'info', duration = 3000) {
+        // 创建toast元素
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.right = '20px';
+        toastContainer.style.zIndex = '10000';
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        toast.style.background = type === 'success' ? 'rgba(40, 167, 69, 0.9)' : 
+                                type === 'error' ? 'rgba(220, 53, 69, 0.9)' : 
+                                type === 'warning' ? 'rgba(255, 193, 7, 0.9)' : 'rgba(0, 0, 0, 0.9)';
+        toast.style.color = type === 'warning' ? '#212529' : 'white';
+        toast.style.padding = '12px 20px';
+        toast.style.borderRadius = '6px';
+        toast.style.marginBottom = '10px';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+        toast.style.maxWidth = '300px';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        toast.style.transition = 'all 0.3s ease';
+
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+
+        // 触发显示动画
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        }, 10);
+
+        // 自动移除
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                if (toastContainer.parentNode) {
+                    toastContainer.parentNode.removeChild(toastContainer);
+                }
+            }, 300);
+        }, duration);
+    }
+
+    // 获取token（使用统一token管理）
+    async function getValidToken() {
+        if (!unifiedTokenManager) {
+            throw new Error('Token Manager 未初始化');
+        }
+        
+        const token = await unifiedTokenManager.getToken(true);
+        if (token) {
+            accountToken = token;
+            return token;
+        }
+        throw new Error('无法获取有效token');
+    }
+
+    // 注册用户函数 - 使用新接口
+    async function registerUser(mobileNum, isReturnFlow = false, hasActivityDuration = false) {
+        console.log(`[DEBUG] 开始注册用户: ${mobileNum}, isReturnFlow: ${isReturnFlow}, hasActivityDuration: ${hasActivityDuration}`);
+            
+        try {
+            //构造新接口的查询参数
+            const queryParams = new URLSearchParams({
+                region_code: '1',
+                area_code: 'HB',
+                province: '湖北',
+                city_name_cn: '武汉',
+                os_type: '0',
+                product_type: '0',
+                src_channel: 'guanwang',
+                client_version: '11.3.1.2',
+                hardware_id: 'lgdv11_d28908cdcae0040015a777e4cd2e3345',
+                locale: 'zh_CN'
+            });
+                
+            const apiUrl = `http://vf-api2.nn.com/client/login/code?${queryParams.toString()}`;
+                
+            // 添加调试信息验证实际参数
+            console.log(`[DEBUG]构造的查询参数:`, Object.fromEntries(queryParams));
+            console.log(`[DEBUG] src_channel实际值:`, queryParams.get('src_channel'));
+                
+            //构造请求体数据
+            const requestBody = {
+                isTrusted: true,
+                _vts: Date.now(),
+                country_code: "86",
+                mobile_num: mobileNum.toString(),
+                smscode: "8888", // 默认验证码
+                state: 4,
+                refer_code: "",
+                device_info: "NIUMA",
+                install_package_name: "",
+                is_off_rc4: "off",
+                smscode_key: "51b67c15827d4faab615a742d11decb7" //固定的smscode_key
+            };
+                
+            console.log(`[DEBUG] 请求URL: ${apiUrl}`);
+            console.log(`[DEBUG] 请求体:`, requestBody);
+                
+            // 发送注册请求到新接口
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+                
+            const data = await response.json();
+            console.log(`[DEBUG] 注册API响应:`, data);
+            console.log(`[DEBUG]响应数据类型:`, typeof data);
+            console.log(`[DEBUG]响应数据键名:`, Object.keys(data));
+            
+            if (data.data) {
+                console.log(`[DEBUG] data字段类型:`, typeof data.data);
+                console.log(`[DEBUG] data字段值:`, data.data);
+                if (typeof data.data === 'object') {
+                    console.log(`[DEBUG] data对象键名:`, Object.keys(data.data));
+                }
+            }
+                
+            //根据新接口的响应格式处理结果
+            if (data.code === 0) {
+                // 注册成功
+                console.log(`[DEBUG]完整响应数据:`, JSON.stringify(data, null, 2));
+                console.log(`[DEBUG] data字段详细信息:`, data.data);
+                
+                //多种方式尝试提取用户ID
+                let userId = 'unknown';
+                
+                // 方式1:直接从data中提取 - 详细检查所有可能的字段
+                if (data.data && typeof data.data === 'object') {
+                    console.log(`[DEBUG] data对象的所有字段:`, Object.keys(data.data));
+                    console.log(`[DEBUG] data完整内容:`, data.data);
+                    console.log(`[DEBUG] data.nn_id值:`, data.data.nn_id);
+                    console.log(`[DEBUG] data.user_id值:`, data.data.user_id);
+                    console.log(`[DEBUG] data.id值:`, data.data.id);
+                    console.log(`[DEBUG] data.nn_jwt值:`, data.data.nn_jwt);
+                    
+                    //先尝试从响应中直接获取用户ID
+                    userId = data.data.user_id ||  //真正的用户ID
+                             data.data.id ||       //备选ID字段
+                             data.data.userId ||   //另可能的ID字段
+                             data.data.uid ||      //另可能的ID字段
+                             data.data.nn_id ||    // NN ID（作为备选）
+                             'unknown';
+                    console.log(`[DEBUG] 从响应数据提取的用户ID:`, userId);
+                    
+                    // 如果从响应中获取的不是正确的用户ID，则通过手机号查询真实用户ID
+                    if (userId === 'unknown' || userId === data.data.nn_id) {
+                        console.log(`[DEBUG] 需要通过手机号查询真实用户ID: ${mobileNum}`);
+                        try {
+                            // 通过后端API查询真实用户ID
+                            const token = await getValidToken();
+                            const queryResponse = await fetch('/api/query-user-info', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    account_token: token,
+                                    mobile_num: mobileNum
+                                })
+                            });
+                            
+                            const queryData = await queryResponse.json();
+                            console.log(`[DEBUG] 手机号查询结果:`, queryData);
+                            
+                            if (queryData.success && queryData.user_data && queryData.user_data.id) {
+                                userId = queryData.user_data.id;
+                                console.log(`[DEBUG] 通过手机号查询到的真实用户ID:`, userId);
+                            } else {
+                                console.log(`[DEBUG] 无法通过手机号查询到用户ID，使用响应数据中的ID`);
+                            }
+                        } catch (error) {
+                            console.log(`[DEBUG] 通过手机号查询用户ID失败:`, error);
+                        }
+                    }
+                }
+                
+                // 方式2: 如果data是字符串或数字，直接使用
+                if (data.data && (typeof data.data === 'string' || typeof data.data === 'number')) {
+                    userId = data.data.toString();
+                    console.log(`[DEBUG] 从data直接提取:`, userId);
+                }
+                
+                // 方式3: 从其他可能的字段提取
+                if (userId === 'unknown' && data.user_id) {
+                    userId = data.user_id;
+                    console.log(`[DEBUG] 从根级user_id提取:`, userId);
+                }
+                
+                // 方式4: 从result字段提取
+                if (userId === 'unknown' && data.result) {
+                    userId = data.result.user_id || data.result.id || 'unknown';
+                    console.log(`[DEBUG] 从result字段提取:`, userId);
+                }
+                
+                console.log(`[DEBUG] 最终提取的用户ID: ${userId}`);
+                console.log(`[DEBUG]注册成功: ${mobileNum}, userId: ${userId}`);
+                showToast(`账号注册成功: ${mobileNum}`, 'success');
+                    
+                // 如果是回流用户，需要修改注册时间和付费状态
+                if (isReturnFlow && userId !== 'unknown') {
+                    await updateReturnFlowUser(userId);
+                }
+                // 如果是有活动时长用户，需要添加时长
+                else if (hasActivityDuration && userId !== 'unknown') {
+                    await addActivityDuration(userId);
+                }
+                // 如果是无时长用户，需要扣减1小时可暂停时长
+                else if (!hasActivityDuration && userId !== 'unknown') {
+                    await deductDuration(userId, 60); // 扣减60分钟（1小时）可暂停时长
+                }
+                    
+                return { success: true, userId, mobileNum, message: '注册成功' };
+            } else if (data.code === 500001) {
+                //账已存在，跳过并尝试下一个
+                console.log(`[DEBUG]账号已存在: ${mobileNum}, code: ${data.code}`);
+                showToast(`账号已存在: ${mobileNum}，跳过`, 'info');
+                return { success: false, mobileNum, message: '账号已存在' };
+            } else {
+                console.log(`[DEBUG] 注册失败: ${mobileNum}, code: ${data.code}, message: ${data.msg || data.message}`);
+                throw new Error(data.msg || data.message || '注册失败');
+            }
+        } catch (error) {
+            console.error('注册失败:', error);
+            showToast(`注册失败 ${mobileNum}: ${error.message}`, 'error');
+            return { success: false, mobileNum, message: error.message };
+        }
+    }
+
+    // 更新回流用户（修改注册时间、付费状态）
+    async function updateReturnFlowUser(userId) {
+        try {
+            // 计算30天前的时间
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const createTime = thirtyDaysAgo.toISOString().slice(0, 19).replace('T', ' ');
+
+            // 修改注册时间
+            const timeResponse = await fetch('/api/v1/update_register_time', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    new_create_time: createTime,
+                    account_token: accountToken
+                })
+            });
+
+            const timeData = await timeResponse.json();
+            if (!timeData.success) {
+                throw new Error(timeData.message || '更新注册时间失败');
+            }
+
+            // 修改付费状态为未付费
+            const paymentResponse = await fetch('/api/v1/update_payment_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    first_pay_time: null, // 未付费
+                    account_token: accountToken
+                })
+            });
+
+            const paymentData = await paymentResponse.json();
+            if (!paymentData.success) {
+                throw new Error(paymentData.message || '更新付费状态失败');
+            }
+
+            showToast(`回流用户设置完成: ${userId}`, 'success');
+        } catch (error) {
+            console.error('更新回流用户失败:', error);
+            showToast(`更新回流用户失败 ${userId}: ${error.message}`, 'error');
+        }
+    }
+
+    // 添加活动时长（1小时不可暂停时长）
+    async function addActivityDuration(userId) {
+        try {
+            const url = `https://vf-staffapi.leigod.com/staff/member/${userId}/duration`;
+
+            // 构造表单数据，添加1小时不可暂停时长
+            const params = new URLSearchParams();
+            params.append('account_token', accountToken);
+            params.append('id', '0');
+            params.append('duration_type', '2'); // 不可暂停时长
+            params.append('minutes_type', '9');
+            params.append('send_time_type', '1');
+            params.append('minutes', '60'); // 1小时 = 60分钟
+            params.append('desc', '活动赠送时长');
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            });
+
+            const data = await response.json();
+
+            if (data.code === 0) {
+                showToast(`活动时长添加成功: ${userId} (1小时)`, 'success');
+            } else {
+                throw new Error(data.msg || '添加时长失败');
+            }
+        } catch (error) {
+            console.error('添加活动时长失败:', error);
+            showToast(`添加活动时长失败 ${userId}: ${error.message}`, 'error');
+        }
+    }
+    
+    // 扣减时长（1小时可暂停时长）
+    async function deductDuration(userId, minutes) {
+        try {
+            const url = `https://vf-staffapi.leigod.com/staff/member/${userId}/duration`;
+
+            // 构造表单数据，扣减指定分钟数的时长
+            const params = new URLSearchParams();
+            params.append('account_token', accountToken);
+            params.append('id', '0');
+            params.append('duration_type', '1'); // 可暂停时长
+            params.append('minutes_type', '10'); // 扣减时长
+            params.append('send_time_type', '1');
+            params.append('minutes', `-${minutes}`); // 负数表示扣减
+            params.append('desc', `扣减${minutes}分钟时长`);
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: params.toString()
+            });
+
+            const data = await response.json();
+
+            if (data.code === 0) {
+                showToast(`时长扣减成功: ${userId} (-${minutes}分钟)`, 'success');
+            } else {
+                throw new Error(data.msg || `扣减时长失败`);
+            }
+        } catch (error) {
+            console.error(`扣减时长失败:`, error);
+            showToast(`扣减时长失败 ${userId}: ${error.message}`, 'error');
+        }
+    }
+
+    // 更新结果显示
+    function updateResultDisplay(result) {
+        const resultContent = document.getElementById('resultContent');
+        const timestamp = new Date().toLocaleString();
+        
+        let resultHtml = '';
+        if (result.success) {
+            resultHtml = `
+                <div class="result-item">
+                    <strong>[${timestamp}] 注册成功</strong><br>
+                    用户ID: ${result.userId}<br>
+                    手机号: ${result.mobileNum} <button class="query-btn" onclick="queryUserInfo('${result.mobileNum}')" style="margin-left: 10px; padding: 2px 6px; font-size: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">🔍 查询</button><br>
+                    状态: ${result.message}
+                </div>
+            `;
+        } else {
+            resultHtml = `
+                <div class="result-item" style="background: #ffeef0; border-left: 4px solid #e74c3c;">
+                    <strong style="color: #e74c3c;">[${timestamp}] 注册失败</strong><br>
+                    手机号: ${result.mobileNum} <button class="query-btn" onclick="queryUserInfo('${result.mobileNum}')" style="margin-left: 10px; padding: 2px 6px; font-size: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">🔍 查询</button><br>
+                    状态: ${result.message}
+                </div>
+            `;
+        }
+        
+        // 添加到现有结果前面
+        resultContent.innerHTML = resultHtml + resultContent.innerHTML;
+    }
+
+    // 更新进度显示
+    function updateProgress(current, total) {
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const counterDisplay = document.getElementById('counterDisplay');
+        
+        progressBar.style.display = 'block';
+        counterDisplay.style.display = 'block';
+        
+        const percentage = Math.round((current / total) * 100);
+        progressFill.style.width = `${percentage}%`;
+        counterDisplay.textContent = `进度: ${current}/${total} (${percentage}%)`;
+    }
+
+    // 重置进度显示
+    function resetProgress() {
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const counterDisplay = document.getElementById('counterDisplay');
+        
+        progressBar.style.display = 'none';
+        counterDisplay.style.display = 'none';
+        progressFill.style.width = '0%';
+    }
+
+    // 注册回流用户
+    async function registerReturnFlowUser() {
+        resetProgress();
+        const countInput = document.getElementById('registerCount');
+        const count = parseInt(countInput.value) || 1;
+        
+        if (count < 1 || count > 100) {
+            showToast('注册数量必须在1-100之间', 'error');
+            return;
+        }
+        
+        showToast(`开始注册${count}个回流用户...`, 'info');
+        
+        let mobileNum = currentMobileNum;
+        let registeredCount = 0;
+        let attempts = 0;
+        const maxAttempts = Infinity; // 移除最大尝试次数限制
+        
+        console.log(`[DEBUG] 开始批量注册回流用户，目标: ${count}, 起始手机号: ${mobileNum}`);
+        
+        while (registeredCount < count && attempts < maxAttempts) {
+            attempts++;
+            console.log(`[DEBUG] 第${attempts}次尝试，当前手机号: ${mobileNum}`);
+            updateProgress(registeredCount, count);
+            
+            const result = await registerUser(mobileNum, true, false); // isReturnFlow=true, hasActivityDuration=false
+            console.log(`[DEBUG] 注册结果:`, result);
+            
+            if (result.success) {
+                registeredCount++;
+                updateResultDisplay(result);
+                mobileNum++; // 成功注册后尝试下一个
+                console.log(`[DEBUG] 注册成功，移动到下一个手机号: ${mobileNum}`);
+            } else if (result.message === '账号已存在') {
+                // 如果是账号已存在错误，跳过并尝试下一个
+                mobileNum++; // 尝试下一个手机号
+                console.log(`[DEBUG] 账号已存在，移动到下一个手机号: ${mobileNum}`);
+            } else {
+                // 如果是其他错误，也尝试下一个
+                updateResultDisplay(result);
+                mobileNum++; // 尝试下一个手机号
+                console.log(`[DEBUG] 其他错误，移动到下一个手机号: ${mobileNum}`);
+            }
+            
+            // 更新当前手机号
+            currentMobileNum = mobileNum;
+            // 保存到服务器以便下次使用
+            fetch('/api/current-mobile-num', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mobile_num: parseInt(currentMobileNum)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`[SAVE] 手机号已保存到服务器: ${currentMobileNum}`);
+                } else {
+                    console.error('保存手机号到服务器失败:', data);
+                }
+            })
+            .catch(error => {
+                console.error('保存手机号到服务器时发生错误:', error);
+            });
+        }
+        
+        console.log(`[DEBUG] 批量注册完成，成功: ${registeredCount}个，总共尝试: ${attempts}次`);
+        resetProgress();
+        if (registeredCount < count) {
+            showToast(`回流用户注册完成，成功: ${registeredCount}个 (目标: ${count}个)`, 'warning');
+        } else {
+            showToast(`回流用户注册完成，成功: ${registeredCount}个`, 'success');
+        }
+    }
+
+    // 注册无时长用户
+    async function registerNoDurationUser() {
+        resetProgress();
+        const countInput = document.getElementById('registerCount');
+        const count = parseInt(countInput.value) || 1;
+        
+        if (count < 1 || count > 100) {
+            showToast('注册数量必须在1-100之间', 'error');
+            return;
+        }
+        
+        showToast(`开始注册${count}个无时长用户...`, 'info');
+        
+        let mobileNum = currentMobileNum;
+        let registeredCount = 0;
+        let attempts = 0;
+        const maxAttempts = Infinity; // 移除最大尝试次数限制
+        
+        console.log(`[DEBUG] 开始批量注册无时长用户，目标: ${count}, 起始手机号: ${mobileNum}`);
+        
+        while (registeredCount < count && attempts < maxAttempts) {
+            attempts++;
+            console.log(`[DEBUG] 第${attempts}次尝试，当前手机号: ${mobileNum}`);
+            updateProgress(registeredCount, count);
+            
+            const result = await registerUser(mobileNum, false, false); // isReturnFlow=false, hasActivityDuration=false
+            console.log(`[DEBUG] 注册结果:`, result);
+            
+            if (result.success) {
+                registeredCount++;
+                updateResultDisplay(result);
+                mobileNum++; // 成功注册后尝试下一个
+                console.log(`[DEBUG] 注册成功，移动到下一个手机号: ${mobileNum}`);
+            } else if (result.message === '账号已存在') {
+                // 如果是账号已存在错误，跳过并尝试下一个
+                mobileNum++; // 尝试下一个手机号
+                console.log(`[DEBUG] 账号已存在，移动到下一个手机号: ${mobileNum}`);
+            } else {
+                // 如果是其他错误，也尝试下一个
+                updateResultDisplay(result);
+                mobileNum++; // 尝试下一个手机号
+                console.log(`[DEBUG] 其他错误，移动到下一个手机号: ${mobileNum}`);
+            }
+            
+            // 更新当前手机号
+            currentMobileNum = mobileNum;
+            // 保存到服务器以便下次使用
+            fetch('/api/current-mobile-num', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mobile_num: parseInt(currentMobileNum)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`[SAVE] 手机号已保存到服务器: ${currentMobileNum}`);
+                } else {
+                    console.error('保存手机号到服务器失败:', data);
+                }
+            })
+            .catch(error => {
+                console.error('保存手机号到服务器时发生错误:', error);
+            });
+        }
+        
+        console.log(`[DEBUG] 无时长用户批量注册完成，成功: ${registeredCount}个，总共尝试: ${attempts}次`);
+        resetProgress();
+        if (registeredCount < count) {
+            showToast(`无时长用户注册完成，成功: ${registeredCount}个 (目标: ${count}个)`, 'warning');
+        } else {
+            showToast(`无时长用户注册完成，成功: ${registeredCount}个`, 'success');
+        }
+    }
+
+    // 注册有活动时长用户
+    async function registerActivityDurationUser() {
+        resetProgress();
+        const countInput = document.getElementById('registerCount');
+        const count = parseInt(countInput.value) || 1;
+        
+        if (count < 1 || count > 100) {
+            showToast('注册数量必须在1-100之间', 'error');
+            return;
+        }
+        
+        showToast(`开始注册${count}个有活动时长用户...`, 'info');
+        
+        let mobileNum = currentMobileNum;
+        let registeredCount = 0;
+        let attempts = 0;
+        const maxAttempts = Infinity; // 移除最大尝试次数限制
+        
+        console.log(`[DEBUG] 开始批量注册有活动时长用户，目标: ${count}, 起始手机号: ${mobileNum}`);
+        
+        while (registeredCount < count && attempts < maxAttempts) {
+            attempts++;
+            console.log(`[DEBUG] 第${attempts}次尝试，当前手机号: ${mobileNum}`);
+            updateProgress(registeredCount, count);
+            
+            const result = await registerUser(mobileNum, false, true); // isReturnFlow=false, hasActivityDuration=true
+            console.log(`[DEBUG] 注册结果:`, result);
+            
+            if (result.success) {
+                registeredCount++;
+                updateResultDisplay(result);
+                mobileNum++; // 成功注册后尝试下一个
+                console.log(`[DEBUG] 注册成功，移动到下一个手机号: ${mobileNum}`);
+            } else if (result.message === '账号已存在') {
+                // 如果是账号已存在错误，跳过并尝试下一个
+                mobileNum++; // 尝试下一个手机号
+                console.log(`[DEBUG] 账号已存在，移动到下一个手机号: ${mobileNum}`);
+            } else {
+                // 如果是其他错误，也尝试下一个
+                updateResultDisplay(result);
+                mobileNum++; // 尝试下一个手机号
+                console.log(`[DEBUG] 其他错误，移动到下一个手机号: ${mobileNum}`);
+            }
+            
+            // 更新当前手机号
+            currentMobileNum = mobileNum;
+            // 保存到服务器以便下次使用
+            fetch('/api/current-mobile-num', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mobile_num: parseInt(currentMobileNum)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`[SAVE] 手机号已保存到服务器: ${currentMobileNum}`);
+                } else {
+                    console.error('保存手机号到服务器失败:', data);
+                }
+            })
+            .catch(error => {
+                console.error('保存手机号到服务器时发生错误:', error);
+            });
+        }
+        
+        console.log(`[DEBUG] 有活动时长用户批量注册完成，成功: ${registeredCount}个，总共尝试: ${attempts}次`);
+        resetProgress();
+        if (registeredCount < count) {
+            showToast(`有活动时长用户注册完成，成功: ${registeredCount}个 (目标: ${count}个)`, 'warning');
+        } else {
+            showToast(`有活动时长用户注册完成，成功: ${registeredCount}个`, 'success');
+        }
+    }
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[PAGE LOAD] 账号注册页面加载完成');
+        
+        // 从服务器获取当前手机号
+        fetch('/api/current-mobile-num')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentMobileNum = data.current_mobile_num;
+                    console.log(`[INIT] 从服务器获取手机号: ${currentMobileNum}`);
+                } else {
+                    console.warn('获取服务器手机号失败，使用默认值:', data);
+                }
+            })
+            .catch(error => {
+                console.error('获取服务器手机号失败:', error);
+                // 如果服务器获取失败，使用默认值
+            });
+        
+        
+        // 初始化token
+        if (unifiedTokenManager) {
+            getValidToken().then(token => {
+                console.log('Token获取成功');
+            }).catch(error => {
+                console.error('Token获取失败:', error);
+                showToast('Token获取失败，请检查网络连接', 'error');
+            });
+        } else {
+            showToast('Token管理器未加载，请刷新页面重试', 'error');
+        }
+    });
+    
+    // 查询用户信息函数
+    async function queryUserInfo(mobileNum) {
+        try {
+            // 显示加载状态
+            showToast(`正在查询手机号 ${mobileNum} 的信息...`, 'info');
+            
+            // 获取有效token
+            const token = await getValidToken();
+            
+            // 通过后端API代理查询用户信息，避免跨域问题
+            const response = await fetch('/api/query-user-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    account_token: token,
+                    mobile_num: mobileNum
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.user_data) {
+                // 显示用户信息
+                showUserQueryResult(data.user_data);
+                showToast(`查询成功！手机号: ${mobileNum}`, 'success');
+            } else {
+                // 处理错误情况
+                showToast(`查询失败: ${data.error || '用户不存在或查询出错'}`, 'error');
+                console.error('查询用户信息失败:', data);
+                
+                // 显示基本信息
+                showUserQueryResult({
+                    mobile_num: mobileNum,
+                    error: data.error || '用户不存在',
+                    message: '用户信息查询失败或用户不存在'
+                });
+            }
+        } catch (error) {
+            console.error('查询用户信息时发生错误:', error);
+            showToast(`查询失败: ${error.message}`, 'error');
+            
+            // 显示基本错误信息
+            showUserQueryResult({
+                mobile_num: mobileNum,
+                error: error.message,
+                message: '网络错误或API不可用'
+            });
+        }
+    }
+    
+    // 显示用户查询结果
+    function showUserQueryResult(userData) {
+        // 构建用户信息HTML，与用户管理页面保持一致
+        let userInfoHtml = '<div class="user-details">';
+        
+        if (userData && userData.id) {
+            // 显示用户详细信息（来自新API的数据结构）
+            userInfoHtml += `
+                <div class="user-details-grid">
+                    <div class="user-detail-item copyable" onclick="copyToClipboard('${userData.id}', '用户ID')"><strong>用户ID:</strong> ${userData.id}</div>
+                    <div class="user-detail-item copyable" onclick="copyToClipboard('${userData.nn_id || '--'}', 'NN ID')"><strong>NN ID:</strong> ${userData.nn_id || '--'}</div>
+                    <div class="user-detail-item"><strong>手机号:</strong> +${userData.country_code || '86'} ${userData.mobile_num}</div>
+                    <div class="user-detail-item"><strong>注册时间:</strong> ${userData.create_time || '--'}</div>
+                    <div class="user-detail-item"><strong>注册渠道:</strong> ${userData.src_channel || '--'}</div>
+                    <div class="user-detail-item"><strong>昵称:</strong> ${userData.nickname || '--'}</div>
+                    <div class="user-detail-item"><strong>付费用户:</strong> ${userData.is_pay_user !== undefined ? (userData.is_pay_user ? '是' : '否') : '--'}</div>
+                    <div class="user-detail-item"><strong>状态:</strong> ${userData.status !== undefined ? (userData.status === 0 ? '正常' : '异常') : '--'}</div>
+                </div>
+            `;
+        } else if (userData && userData.mobile_num) {
+            // 显示基本错误信息
+            userInfoHtml += `
+                <div class="user-details-grid">
+                    <div class="user-detail-item"><strong>查询手机号:</strong> ${userData.mobile_num}</div>
+                    <div class="user-detail-item"><strong>状态:</strong> ${userData.message || '用户不存在'}</div>
+                    ${userData.error ? `<div class="user-detail-item"><strong>错误:</strong> ${userData.error}</div>` : ''}
+                </div>
+            `;
+        } else {
+            userInfoHtml += '<p>未找到用户信息</p>';
+        }
+        
+        userInfoHtml += '</div>';
+        
+        // 显示模态框
+        document.getElementById('userQueryResult').innerHTML = userInfoHtml;
+        document.getElementById('userQueryModal').style.display = 'block';
+        
+        // 添加点击关闭功能
+        const modal = document.getElementById('userQueryModal');
+        const closeBtn = modal.querySelector('.close');
+        
+        // 点击关闭按钮时关闭
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+        
+        // 点击模态框外部时关闭
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    }
+    
+    // 复制文本到剪贴板函数
+    function copyToClipboard(text, fieldName) {
+        if (!text || text === '--') {
+            showToast(`${fieldName}内容为空，无法复制`, 'warning');
+            return;
+        }
+        
+        navigator.clipboard.writeText(text).then(function() {
+            showToast(`${fieldName}已复制到剪贴板: ${text}`, 'success');
+        }).catch(function(err) {
+            console.error('复制失败:', err);
+            showToast(`复制失败: ${err.message}`, 'error');
+            
+            // 降级方案：使用旧方法
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast(`${fieldName}已复制到剪贴板`, 'success');
+            } catch (err2) {
+                console.error('降级复制失败:', err2);
+                showToast('复制功能不可用，请手动复制', 'error');
+            }
+        });
+    }
+</script>
+
+<!-- 弹窗模态框 -->
+<div id="userQueryModal" class="modal"
+     style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content"
+         style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 60%; max-width: 600px; border-radius: 8px;">
+        <span class="close" onclick="document.getElementById('userQueryModal').style.display='none'"
+              style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h3 style="color: #333; margin-top: 0;"><i class="fas fa-user"></i> 用户信息</h3>
+        <div id="userQueryResult" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+</div>
+
+<!-- Toast通知容器 -->
+<div class="toast-container" id="toastContainer"></div>
+</body>
+</html>
