@@ -1,0 +1,102 @@
+生成二维码
+通过此API，你可以快速生成不同样式、尺寸、格式的二维码图像。您也可以开始将其嵌入到您自己的 Web 应用程序中，例如二维码生成器。我们的网站 cli.im 也在使用此API。
+
+快速入门
+发起一个GET请求来生成二维码
+
+
+https://api.2dcode.biz/v1/create-qr-code?data=[URL编码文本]&size=[像素]x[像素]
+你可以直接访问以下 URL 直接在浏览器中进行测试：
+
+
+https://api.2dcode.biz/v1/create-qr-code?data=Example&size=128x128
+您也可以使用<img>标签可以轻松地将二维码嵌入HTML 文档中。
+
+标签示例
+
+
+<img src="https://api.2dcode.biz/v1/create-qr-code?data=Example&size=128x128" alt="" title="" />
+生成/显示如下二维码图像
+
+
+
+代码示例
+
+python
+
+php
+
+javascript
+
+import requests
+
+with open('qrcode.png', 'wb') as f:
+    f.write(requests.get('https://api.2dcode.biz/v1/create-qr-code?data=Example').content)
+参数
+
+
+二维码解码
+GET方式
+通过GET请求携带图像URL来解码/读取二维码内容
+
+发起一个GET请求来解码
+
+
+https://api.2dcode.biz/v1/read-qr-code?file_url=<URLEncode后的图像文件URL>
+你可以直接访问以下 URL 直接在浏览器中进行测试：
+
+
+https://api.2dcode.biz/v1/read-qr-code?file_url=https%3A%2F%2Fgstatic.clewm.net%2Fcaoliao-resource%2F250408%2F80bc7c_bd33d499.png
+示例代码
+
+python
+
+php
+
+javascript
+
+import requests
+from urllib.parse import quote
+
+r = requests.get("https://api.2dcode.biz/v1/read-qr-code?file_url=" + quote("https://gstatic.clewm.net/caoliao-resource/250408/80bc7c_bd33d499.png"))
+print(r.json()["data"]["contents"][0])
+POST方式
+可以通过表单请求的方式携带图像URL来解码/读取二维码内容
+
+示例代码
+
+python
+
+import requests
+
+# 准备请求参数
+url = 'https://api.2dcode.biz/v1/read-qr-code'
+files = {
+    'file': ('qrcode.png', open('qrcode.png', 'rb'))  # 上传本地二维码图片
+}
+
+# 发送POST请求
+response = requests.post(url, files=files)
+
+# 解析响应
+result = response.json()
+contents = result['data']['contents']
+  print('识别到的二维码内容:', contents)
+响应说明
+响应示例
+
+{
+  "code": 0,
+  "message": "ok",
+  "data": {
+    "contents": [
+      "Example"
+    ]
+  }
+}
+响应参数
+参数名	类型	说明
+code	number	状态码, 0表示成功, 其他表示失败
+message	string	返回信息
+data	object	返回数据对象
+├─ contents	array	二维码内容数组, 返回识别到的所有二维码内容, 图中没有二维码时返回空数组

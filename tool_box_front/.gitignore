@@ -1,0 +1,7 @@
+/data/release_process_config.json
+/current_mobile_num.json
+__pycache__/
+*.py[cod]
+.idea/
+*.pid
+/api/1.txt

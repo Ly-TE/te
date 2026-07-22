@@ -1,0 +1,6 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Fri Sep 20 16:53:06 CST 2024","Fri Sep 20 16:53:06 CST 2024","63","test_cases","test_pause_status","TestApi","","","test_pause_status",""
+"passed","Fri Sep 20 16:53:05 CST 2024","Fri Sep 20 16:53:06 CST 2024","488","test_cases","test_client_login","TestApi","","","test_client_login",""
+"passed","Fri Sep 20 16:53:06 CST 2024","Fri Sep 20 16:53:06 CST 2024","63","test_cases","test_client_login","TestApi","","","test_pause_status",""
+"passed","Fri Sep 20 16:53:06 CST 2024","Fri Sep 20 16:53:06 CST 2024","546","test_cases","test_pause_status","TestApi","","","test_client_login",""
+"passed","Fri Sep 20 16:53:06 CST 2024","Fri Sep 20 16:53:07 CST 2024","586","test_cases","test_pause_status","TestApi2","","","test_pause_status",""

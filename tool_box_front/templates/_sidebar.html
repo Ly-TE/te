@@ -1,0 +1,16 @@
+<!-- 公共侧边栏：菜单由 app.py 的 PAGE_CONFIG 自动注入 -->
+<div class="sidebar">
+    <div class="logo">
+        <h2><i class="fas fa-toolbox"></i> 开发工具箱</h2>
+        <p>{{ app_version }}</p>
+    </div>
+    <ul class="menu">
+        {% for item in menu_items %}
+        <li>
+            <a href="{{ item.href }}" class="menu-item{% if item.template == active_template %} active{% endif %}">
+                <i class="{{ item.icon }}"></i> {{ item.title }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布流程配置 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .page-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .toolbar .tips {
+            color: #5c6b77;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            width: 260px;
+            max-width: 100%;
+            border: 1px solid #dcdfe6;
+            border-radius: 8px;
+            padding: 11px 14px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.15);
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #fff;
+            transition: all 0.25s ease;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .action-btn.secondary {
+            background: #95a5a6;
+        }
+
+        .action-btn.success {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(135deg, #ff7875, #cf1322);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #ebeef5;
+            border-radius: 12px;
+        }
+
+        .editable-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+
+        .editable-table th,
+        .editable-table td {
+            border-bottom: 1px solid #ebeef5;
+            border-right: 1px solid #ebeef5;
+            padding: 10px;
+            vertical-align: top;
+            background: #fff;
+        }
+
+        .editable-table th:last-child,
+        .editable-table td:last-child {
+            border-right: none;
+        }
+
+        .editable-table th {
+            background: #f7f9fc;
+            color: #2c3e50;
+            font-weight: 700;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .editable-table tbody tr:nth-child(even) td {
+            background: #fcfdff;
+        }
+
+        .table-input,
+        .table-textarea {
+            width: 100%;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .table-input:focus,
+        .table-textarea:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.15);
+        }
+
+        .table-textarea {
+            min-height: 0;
+            height: auto;
+            resize: none;
+            overflow-y: hidden;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.4;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
+
+        .row-index {
+            width: 72px;
+            text-align: center;
+            color: #667085;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .action-cell {
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mini-btn {
+            border: none;
+            background: #fff2f0;
+            color: #cf1322;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .mini-btn.edit {
+            background: #e8f3ff;
+            color: #1677ff;
+        }
+
+        .mini-btn.move {
+            background: #f6ffed;
+            color: #389e0d;
+        }
+
+        .drag-handle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            background: #f6ffed;
+            color: #389e0d;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .preview-grid-row.dragging {
+            opacity: 0.45;
+        }
+
+        .preview-grid-row.drag-over {
+            outline: 2px dashed #409eff;
+            outline-offset: -2px;
+            background: #f0f7ff;
+        }
+
+        .mini-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .status-message.success {
+            display: block;
+            background: #edf9f1;
+            color: #1e8e3e;
+            border: 1px solid #b7ebc6;
+        }
+
+        .status-message.error {
+            display: block;
+            background: #fff2f0;
+            color: #cf1322;
+            border: 1px solid #ffccc7;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .preview-grid {
+            min-width: 1200px;
+        }
+
+        .preview-grid-header,
+        .preview-grid-row {
+            display: grid;
+            grid-template-columns: 72px 1fr 1fr 1.2fr 1.2fr 1.2fr 220px;
+            gap: 0;
+        }
+
+        .preview-grid-header {
+            background: #f7f9fc;
+            color: #2c3e50;
+            font-weight: 700;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .preview-grid-row {
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .preview-grid-row:last-child {
+            border-bottom: none;
+        }
+
+        .preview-grid-row.highlight-row {
+            background: #fffbe6;
+            animation: rowHighlightFade 2.4s ease;
+        }
+
+        .preview-cell {
+            padding: 8px 10px;
+            border-right: 1px solid #ebeef5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.5;
+            align-self: start;
+            min-height: unset;
+            height: fit-content;
+            box-sizing: border-box;
+        }
+
+        .preview-grid-header .preview-cell:last-child,
+        .preview-grid-row .preview-cell:last-child {
+            border-right: none;
+        }
+
+        .preview-index {
+            text-align: center;
+            color: #667085;
+            font-weight: 600;
+        }
+
+        .preview-content {
+            display: block;
+            width: 100%;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .inline-edit-textarea {
+            width: 100%;
+            border: 1px solid #dcdfe6;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 14px;
+            box-sizing: border-box;
+            resize: none;
+            min-height: 0;
+            height: auto;
+            overflow-y: hidden;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.4;
+            font-family: inherit;
+        }
+
+        .inline-edit-textarea:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.15);
+        }
+
+        .editor-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .editor-form-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .editor-form-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .editor-form-item label {
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .editor-title {
+            font-size: 14px;
+            color: #667085;
+            margin-bottom: 16px;
+        }
+
+        .empty-tip {
+            color: #909399;
+            text-align: center;
+            padding: 24px;
+        }
+
+        @keyframes rowHighlightFade {
+            0% {
+                background: #ffe58f;
+            }
+            100% {
+                background: #fffbe6;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .editor-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-clipboard-list"></i> 发布流程配置</h1>
+        <p>支持多条记录横向展示，像 Excel 表格一样编辑、保存和展示</p>
+    </div>
+
+    <div class="page-card" id="preview-card">
+        <h2><i class="fas fa-eye"></i> 保存后展示</h2>
+        <div class="toolbar">
+            <div class="tips">编辑区默认隐藏，可点击右侧按钮打开编辑页面进行维护。</div>
+            <div class="search-group">
+                <input type="text" id="project-search-input" class="search-input" placeholder="请输入项目名称进行搜索定位">
+                <button type="button" id="project-search-btn" class="action-btn primary"><i class="fas fa-search"></i> 搜索</button>
+                <button type="button" id="edit-again-btn" class="action-btn secondary"><i class="fas fa-pen"></i> 编辑</button>
+            </div>
+            <div class="button-group">
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <div class="preview-grid">
+                <div class="preview-grid-header">
+                    <div class="preview-cell preview-index">序号</div>
+                    <div class="preview-cell">项目名称</div>
+                    <div class="preview-cell">VF 域名</div>
+                    <div class="preview-cell">生产域名</div>
+                    <div class="preview-cell">Jenkins 发布流程</div>
+                    <div class="preview-cell">生产发布流程</div>
+                    <div class="preview-cell">操作</div>
+                </div>
+                <div id="preview-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-card" id="editor-card">
+        <h2><i class="fas fa-edit"></i> 表格编辑区</h2>
+        <form id="release-process-form">
+            <div class="toolbar">
+                <div class="tips">每次只编辑一条记录，保存后会更新当前记录或追加到最下面。</div>
+                <div class="button-group">
+                    <button type="button" id="cancel-edit-btn" class="action-btn secondary"><i class="fas fa-xmark"></i> 取消</button>
+                    <button type="button" id="refresh-btn" class="action-btn secondary"><i class="fas fa-rotate-right"></i> 重新加载</button>
+                    <button type="submit" class="action-btn primary"><i class="fas fa-save"></i> 保存当前记录</button>
+                </div>
+            </div>
+
+            <div id="editor-title" class="editor-title">当前为新增模式</div>
+            <div class="editor-form-grid">
+                <div class="editor-form-item">
+                    <label for="project_name">项目名称</label>
+                    <textarea id="project_name" class="table-textarea" rows="1" data-field="project_name" placeholder="请输入项目名称"></textarea>
+                </div>
+                <div class="editor-form-item">
+                    <label for="vf_domain">VF 域名</label>
+                    <textarea id="vf_domain" class="table-textarea" rows="1" data-field="vf_domain" placeholder="请输入 VF 域名，支持换行"></textarea>
+                </div>
+                <div class="editor-form-item">
+                    <label for="production_domain">生产域名</label>
+                    <textarea id="production_domain" class="table-textarea" rows="1" data-field="production_domain" placeholder="请输入生产域名，支持换行"></textarea>
+                </div>
+                <div class="editor-form-item">
+                    <label for="jenkins_process">Jenkins 发布流程</label>
+                    <textarea id="jenkins_process" class="table-textarea" rows="1" data-field="jenkins_process" placeholder="请输入 Jenkins 发布流程"></textarea>
+                </div>
+                <div class="editor-form-item full-width">
+                    <label for="production_process">生产发布流程</label>
+                    <textarea id="production_process" class="table-textarea" rows="1" data-field="production_process" placeholder="请输入生产发布流程"></textarea>
+                </div>
+            </div>
+            <div id="status-message" class="status-message"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const API_URL = '/api/release-process-config';
+    const EMPTY_RECORD = {
+        project_name: '',
+        vf_domain: '',
+        production_domain: '',
+        jenkins_process: '',
+        production_process: ''
+    };
+    let isSavedView = false;
+    let latestRecords = [];
+    let currentEditIndex = null;
+    let dragSourceIndex = null;
+    let inlineEditIndex = null;
+
+    function setStatus(message, type) {
+        const statusEl = document.getElementById('status-message');
+        statusEl.className = `status-message ${type}`;
+        statusEl.textContent = message;
+    }
+
+    function normalizeRecord(record = {}) {
+        return {
+            project_name: record.project_name || '',
+            vf_domain: record.vf_domain || '',
+            production_domain: record.production_domain || '',
+            jenkins_process: record.jenkins_process || '',
+            production_process: record.production_process || ''
+        };
+    }
+
+    function toggleEditMode(hideEditor) {
+        isSavedView = hideEditor;
+        document.getElementById('editor-card').classList.toggle('hidden', hideEditor);
+        if (!hideEditor) {
+            requestAnimationFrame(() => {
+                autoResizeAllTextareas();
+            });
+        }
+    }
+
+    function setEditorTitle() {
+        document.getElementById('editor-title').textContent = currentEditIndex === null
+            ? '当前为新增模式，保存后会追加到最下面'
+            : `当前为编辑模式：第 ${currentEditIndex + 1} 条记录`;
+    }
+
+    function fillEditorForm(record = EMPTY_RECORD, editIndex = null) {
+        currentEditIndex = editIndex;
+        const data = normalizeRecord(record);
+        document.getElementById('project_name').value = data.project_name;
+        document.getElementById('vf_domain').value = data.vf_domain;
+        document.getElementById('production_domain').value = data.production_domain;
+        document.getElementById('jenkins_process').value = data.jenkins_process;
+        document.getElementById('production_process').value = data.production_process;
+        setEditorTitle();
+        autoResizeAllTextareas();
+    }
+
+    function autoResizeTextarea(textarea) {
+        if (!textarea) return;
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+
+    function autoResizeAllTextareas() {
+        document.querySelectorAll('.table-textarea').forEach(autoResizeTextarea);
+    }
+
+    function autoResizeInlineTextareas() {
+        document.querySelectorAll('.inline-edit-textarea').forEach(autoResizeTextarea);
+    }
+
+    function updatePreview(records) {
+        latestRecords = records;
+        const previewBody = document.getElementById('preview-body');
+        if (!records.length) {
+            previewBody.innerHTML = '<div class="empty-tip">暂无数据，请先新增并保存记录</div>';
+            return;
+        }
+
+        previewBody.innerHTML = records.map((record, index) => `
+            <div class="preview-grid-row" data-project-name="${escapeHtml((record.project_name || '').toLowerCase())}" data-row-index="${index}" draggable="true">
+                <div class="preview-cell preview-index">${index + 1}</div>
+                <div class="preview-cell">${renderPreviewCell(record.project_name, index, 'project_name')}</div>
+                <div class="preview-cell">${renderPreviewCell(record.vf_domain, index, 'vf_domain')}</div>
+                <div class="preview-cell">${renderPreviewCell(record.production_domain, index, 'production_domain')}</div>
+                <div class="preview-cell">${renderPreviewCell(record.jenkins_process, index, 'jenkins_process')}</div>
+                <div class="preview-cell">${renderPreviewCell(record.production_process, index, 'production_process')}</div>
+                <div class="preview-cell action-cell">
+                    <div class="record-actions">
+                        ${inlineEditIndex === index
+                            ? `<button type="button" class="mini-btn edit" onclick="saveInlineEdit(${index})">保存</button>
+                               <button type="button" class="mini-btn" onclick="cancelInlineEdit()">取消</button>`
+                            : `<button type="button" class="mini-btn edit" onclick="editRecord(${index})">编辑</button>
+                               <button type="button" class="mini-btn" onclick="deleteRecord(${index})">删除</button>
+                               <span class="drag-handle" title="拖动排序"><i class="fas fa-grip-vertical"></i></span>`}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderPreviewCell(value, index, field) {
+        if (inlineEditIndex === index) {
+            return `<textarea class="inline-edit-textarea" data-inline-field="${field}" rows="1">${escapeHtml(value || '')}</textarea>`;
+        }
+        return `<span class="preview-content">${escapeHtml(value || '-')}</span>`;
+    }
+
+    function fillForm(data, savedView = false) {
+        const records = Array.isArray(data.records) ? data.records.map(normalizeRecord) : [Object.assign({}, EMPTY_RECORD)];
+        updatePreview(records.filter(isMeaningfulRecord));
+        fillEditorForm(EMPTY_RECORD, null);
+        toggleEditMode(savedView);
+    }
+
+    function getFormData() {
+        return normalizeRecord({
+            project_name: document.getElementById('project_name').value.trim(),
+            vf_domain: document.getElementById('vf_domain').value.trim(),
+            production_domain: document.getElementById('production_domain').value.trim(),
+            jenkins_process: document.getElementById('jenkins_process').value.trim(),
+            production_process: document.getElementById('production_process').value.trim()
+        });
+    }
+
+    function isMeaningfulRecord(record) {
+        return Object.values(record).some(value => String(value || '').trim() !== '');
+    }
+
+    function openCreateForm() {
+        fillEditorForm(EMPTY_RECORD, null);
+        toggleEditMode(false);
+        document.getElementById('editor-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function editRecord(index) {
+        const targetRecord = latestRecords[index];
+        if (!targetRecord) {
+            setStatus('未找到对应记录', 'error');
+            return;
+        }
+        inlineEditIndex = index;
+        updatePreview(latestRecords);
+        requestAnimationFrame(() => {
+            autoResizeInlineTextareas();
+            const currentRow = document.querySelector(`.preview-grid-row[data-row-index="${index}"]`);
+            if (currentRow) {
+                currentRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+        setStatus(`正在编辑第 ${index + 1} 条记录`, 'success');
+    }
+
+    function cancelInlineEdit() {
+        inlineEditIndex = null;
+        updatePreview(latestRecords);
+        setStatus('已取消当前条目编辑', 'success');
+    }
+
+    async function saveInlineEdit(index) {
+        const row = document.querySelector(`.preview-grid-row[data-row-index="${index}"]`);
+        if (!row) {
+            setStatus('未找到当前编辑行', 'error');
+            return;
+        }
+
+        const updatedRecord = normalizeRecord({
+            project_name: row.querySelector('[data-inline-field="project_name"]')?.value.trim() || '',
+            vf_domain: row.querySelector('[data-inline-field="vf_domain"]')?.value.trim() || '',
+            production_domain: row.querySelector('[data-inline-field="production_domain"]')?.value.trim() || '',
+            jenkins_process: row.querySelector('[data-inline-field="jenkins_process"]')?.value.trim() || '',
+            production_process: row.querySelector('[data-inline-field="production_process"]')?.value.trim() || ''
+        });
+
+        if (!isMeaningfulRecord(updatedRecord)) {
+            setStatus('请至少填写一项内容后再保存', 'error');
+            return;
+        }
+
+        const nextRecords = latestRecords.slice();
+        nextRecords[index] = updatedRecord;
+        try {
+            inlineEditIndex = null;
+            await persistRecords(nextRecords, '当前条目编辑成功');
+        } catch (error) {
+            inlineEditIndex = index;
+            updatePreview(latestRecords);
+            setStatus(`保存失败：${error.message}`, 'error');
+        }
+    }
+
+    async function persistRecords(records, successMessage) {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                records: records.filter(isMeaningfulRecord)
+            })
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || '保存失败');
+        }
+        fillForm(result.data || { records }, true);
+        setStatus(successMessage, 'success');
+    }
+
+    async function deleteRecord(index) {
+        const nextRecords = latestRecords.slice();
+        nextRecords.splice(index, 1);
+        try {
+            inlineEditIndex = null;
+            await persistRecords(nextRecords, '删除成功，展示内容已更新');
+        } catch (error) {
+            setStatus(`删除失败：${error.message}`, 'error');
+        }
+    }
+
+    async function reorderRecords(fromIndex, toIndex) {
+        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= latestRecords.length || toIndex >= latestRecords.length) {
+            return;
+        }
+        const nextRecords = latestRecords.slice();
+        const [current] = nextRecords.splice(fromIndex, 1);
+        nextRecords.splice(toIndex, 0, current);
+        try {
+            inlineEditIndex = null;
+            await persistRecords(nextRecords, '移动成功，排序已更新');
+        } catch (error) {
+            setStatus(`移动失败：${error.message}`, 'error');
+        }
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function clearRowHighlight() {
+        document.querySelectorAll('.preview-grid-row.highlight-row').forEach(row => {
+            row.classList.remove('highlight-row');
+        });
+    }
+
+    function searchProject() {
+        const keyword = (document.getElementById('project-search-input').value || '').trim().toLowerCase();
+        if (!keyword) {
+            setStatus('请输入要搜索的项目名称', 'error');
+            return;
+        }
+
+        const matchedRow = Array.from(document.querySelectorAll('#preview-body .preview-grid-row')).find(row => {
+            const projectName = row.getAttribute('data-project-name') || '';
+            return projectName.includes(keyword);
+        });
+
+        if (!matchedRow) {
+            setStatus(`未搜索到项目：${keyword}`, 'error');
+            return;
+        }
+
+        clearRowHighlight();
+        matchedRow.classList.add('highlight-row');
+        matchedRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setStatus('已定位到对应项目', 'success');
+    }
+
+    function closeEditor() {
+        fillEditorForm(EMPTY_RECORD, null);
+        toggleEditMode(true);
+    }
+
+    async function loadData(showSuccess = false) {
+        try {
+            const response = await fetch(`${API_URL}?_t=${Date.now()}`);
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || '加载失败');
+            }
+        inlineEditIndex = null;
+            fillForm(result.data || {}, true);
+            if (showSuccess) {
+                setStatus('数据已重新加载', 'success');
+            }
+        } catch (error) {
+            setStatus(`加载失败：${error.message}`, 'error');
+        }
+    }
+
+    document.getElementById('release-process-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const currentRecord = getFormData();
+        if (!isMeaningfulRecord(currentRecord)) {
+            setStatus('请至少填写一项内容后再保存', 'error');
+            return;
+        }
+
+        const nextRecords = latestRecords.slice();
+        if (currentEditIndex === null) {
+            nextRecords.push(currentRecord);
+        } else {
+            nextRecords[currentEditIndex] = currentRecord;
+        }
+
+        try {
+            await persistRecords(nextRecords, currentEditIndex === null ? '新增成功，记录已追加到最下面' : '编辑成功，展示内容已更新');
+        } catch (error) {
+            setStatus(`保存失败：${error.message}`, 'error');
+        }
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', function () {
+        loadData(true);
+    });
+
+    document.getElementById('cancel-edit-btn').addEventListener('click', function () {
+        closeEditor();
+    });
+
+    document.getElementById('edit-again-btn').addEventListener('click', function () {
+        openCreateForm();
+    });
+
+    document.getElementById('project-search-btn').addEventListener('click', function () {
+        searchProject();
+    });
+
+    document.getElementById('project-search-input').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            searchProject();
+        }
+    });
+
+    window.addEventListener('resize', function () {
+        autoResizeAllTextareas();
+        autoResizeInlineTextareas();
+    });
+
+    document.getElementById('release-process-form').addEventListener('input', function (event) {
+        const target = event.target;
+        if (target && target.classList.contains('table-textarea')) {
+            autoResizeTextarea(target);
+        }
+    });
+
+    document.getElementById('preview-body').addEventListener('input', function (event) {
+        const target = event.target;
+        if (target && target.classList.contains('inline-edit-textarea')) {
+            autoResizeTextarea(target);
+        }
+    });
+
+    document.getElementById('preview-body').addEventListener('dragstart', function (event) {
+        const row = event.target.closest('.preview-grid-row');
+        if (!row || inlineEditIndex !== null) {
+            event.preventDefault();
+            return;
+        }
+        dragSourceIndex = Number(row.dataset.rowIndex);
+        row.classList.add('dragging');
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(dragSourceIndex));
+        }
+    });
+
+    document.getElementById('preview-body').addEventListener('dragover', function (event) {
+        event.preventDefault();
+        const row = event.target.closest('.preview-grid-row');
+        document.querySelectorAll('.preview-grid-row.drag-over').forEach(item => item.classList.remove('drag-over'));
+        if (row) {
+            row.classList.add('drag-over');
+        }
+    });
+
+    document.getElementById('preview-body').addEventListener('dragleave', function (event) {
+        const row = event.target.closest('.preview-grid-row');
+        if (row) {
+            row.classList.remove('drag-over');
+        }
+    });
+
+    document.getElementById('preview-body').addEventListener('drop', async function (event) {
+        event.preventDefault();
+        const row = event.target.closest('.preview-grid-row');
+        document.querySelectorAll('.preview-grid-row.drag-over').forEach(item => item.classList.remove('drag-over'));
+        document.querySelectorAll('.preview-grid-row.dragging').forEach(item => item.classList.remove('dragging'));
+        if (!row || dragSourceIndex === null) return;
+        const targetIndex = Number(row.dataset.rowIndex);
+        await reorderRecords(dragSourceIndex, targetIndex);
+        dragSourceIndex = null;
+    });
+
+    document.getElementById('preview-body').addEventListener('dragend', function () {
+        document.querySelectorAll('.preview-grid-row.drag-over, .preview-grid-row.dragging').forEach(item => {
+            item.classList.remove('drag-over', 'dragging');
+        });
+        dragSourceIndex = null;
+    });
+
+    window.editRecord = editRecord;
+    window.deleteRecord = deleteRecord;
+    window.saveInlineEdit = saveInlineEdit;
+    window.cancelInlineEdit = cancelInlineEdit;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleEditMode(true);
+        fillEditorForm(EMPTY_RECORD, null);
+        loadData();
+    });
+</script>
+</body>
+</html>

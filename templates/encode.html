@@ -1,0 +1,501 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加密解密工具 - 开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 加载动画样式 */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 结果区域样式增强 */
+        .result-div.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .result-div.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-div.loading {
+            background: #cce5ff;
+            border-color: #b8daff;
+            color: #004085;
+        }
+
+        /* 复制按钮样式 */
+        .copy-btn {
+            margin-top: 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .copy-btn:hover {
+            background: #5a6268;
+        }
+
+        .copy-btn.success {
+            background: #28a745;
+        }
+
+        /* JSON格式样式 */
+        .json-hint {
+            color: #17a2b8;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .result-div {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .copy-btn {
+                width: 100%;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 加载遮罩层 -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+</div>
+
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1><i class="fas fa-lock"></i> 加密解密工具箱</h1>
+        <p>调用远程朱师傅加密/解密服务，支持JSON格式自动识别和格式化。</p>
+    </div>
+
+    <div class="function-card">
+        <h2><i class="fas fa-exchange-alt"></i> 数据加密/解密</h2>
+
+        <div class="input-group">
+            <label for="numbersInput">
+                <i class="fas fa-keyboard"></i> 输入要处理的文本：
+            </label>
+            <input type="text" id="numbersInput"
+                   placeholder="请输入要加密或解密的文本..."
+                   autocomplete="off">
+            <small style="color: #666; margin-top: 5px; display: block;">
+                支持文本、数字、JSON等格式，自动识别JSON并格式化显示。
+            </small>
+        </div>
+
+        <div class="button-group">
+            <button class="btn encrypt-btn" id="encryptButton">
+                <i class="fas fa-shield-alt"></i> 加密数据
+            </button>
+            <button class="btn decrypt-btn" id="decryptButton">
+                <i class="fas fa-unlock"></i> 解密数据
+            </button>
+            <button class="btn" id="clearButton" style="background: #95a5a6; color: white;">
+                <i class="fas fa-broom"></i> 清空所有
+            </button>
+        </div>
+
+        <div class="result-container">
+            <h3><i class="fas fa-poll"></i> 处理结果</h3>
+            <div id="resultDiv" class="result-div">
+                等待处理结果...
+            </div>
+            <button class="copy-btn" id="copyButton" style="display: none;">
+                <i class="fas fa-copy"></i> 复制结果
+            </button>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <h4><i class="fas fa-lightbulb"></i> 接口说明：</h4>
+
+            <!--            <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #667eea;">-->
+            <!--                <div style="display: flex; justify-content: space-between; align-items: center;">-->
+            <!--                    <p style="color: #666; font-size: 0.9rem; margin: 0;">加密数据接口</p>-->
+            <!--                    <h5 style="color: #20c997; margin: 0; font-size: 1rem;">POST-->
+            <!--                        http://vf-staffapi.nn.com/tools/rc4/encode</h5>-->
+            <!--                </div>-->
+            <!--                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">-->
+            <!--                    <strong>请求参数：</strong> <code>{ "encode_string": "您的文本" }</code>-->
+            <!--                </p>-->
+            <!--            </div>-->
+
+            <!--            <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; border-left: 4px solid #00b09b;">-->
+            <!--                <div style="display: flex; justify-content: space-between; align-items: center;">-->
+            <!--                    <p style="color: #666; font-size: 0.9rem; margin: 0;">解密数据接口</p>-->
+            <!--                    <h5 style="color: #20c997; margin: 0; font-size: 1rem;">POST-->
+            <!--                        http://vf-staffapi.nn.com/tools/rc4/decode</h5>-->
+            <!--                </div>-->
+            <!--                <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">-->
+            <!--                    <strong>请求参数：</strong> <code>{ "decode_string": "加密结果" }</code>-->
+            <!--                </p>-->
+            <!--            </div>-->
+
+            <div style="margin-top: 15px;">
+                <p style="margin: 0 0 8px 0; color: #495057; font-weight: bold;">功能特性：</p>
+                <ul style="margin: 0; padding-left: 20px; color: #666;">
+                    <li><strong>智能JSON识别</strong>：自动检测并格式化JSON数据</li>
+                    <li><strong>一键复制</strong>：方便复制处理结果</li>
+                    <li><strong>加载提示</strong>：显示请求处理状态</li>
+                    <li><strong>错误处理</strong>：详细的错误信息提示</li>
+                    <li><strong>快捷键</strong>：Ctrl+E (加密) / Ctrl+D (解密) / ESC (清空)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 服务器状态 -->
+<div class="server-status">
+    <span class="status-dot"></span>
+    <span>远程服务：vf-staffapi.nn.com</span>
+</div>
+
+<script>
+    // 初始化DOM元素
+    const encryptButton = document.getElementById('encryptButton');
+    const decryptButton = document.getElementById('decryptButton');
+    const clearButton = document.getElementById('clearButton');
+    const copyButton = document.getElementById('copyButton');
+    const numbersInput = document.getElementById('numbersInput');
+    const resultDiv = document.getElementById('resultDiv');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // API配置
+    const API_CONFIG = {
+        baseUrl: 'http://vf-staffapi.nn.com',
+        endpoints: {
+            encode: '/tools/rc4/encode',
+            decode: '/tools/rc4/decode'
+        },
+        timeout: 10000,
+        retryCount: 2
+    };
+
+    // ===== 新增：JSON格式化函数 =====
+    function formatJSONIfNeeded(text) {
+        try {
+            const trimmed = text.trim();
+
+            // 检查是否是JSON格式
+            const isJSON = (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+                          (trimmed.startsWith('[') && trimmed.endsWith(']'));
+
+            if (isJSON) {
+                // 尝试解析并格式化
+                const parsed = JSON.parse(trimmed);
+                return {
+                    formatted: JSON.stringify(parsed, null, 2),
+                    isJSON: true
+                };
+            }
+            return {
+                formatted: text,
+                isJSON: false
+            };
+        } catch (error) {
+            // 解析失败，返回原文本
+            return {
+                formatted: text,
+                isJSON: false
+            };
+        }
+    }
+
+    // ===== 新增：处理结果并智能格式化 =====
+    function processResult(result, operation = '加密') {
+        // 尝试格式化JSON
+        const { formatted, isJSON } = formatJSONIfNeeded(result);
+
+        let message = '';
+        if (operation === '加密') {
+            message = `✅ 加密成功！\n\n加密结果：\n${formatted}`;
+            if (isJSON) {
+                message += '\n\n📋 检测到JSON格式，已自动格式化显示';
+            }
+            message += '\n\n💡 提示：您可以复制此结果进行解密测试。';
+        } else {
+            message = `✅ 解密成功！\n\n原始数据：\n${formatted}`;
+            if (isJSON) {
+                message += '\n\n📋 检测到JSON格式，已自动格式化显示';
+            }
+        }
+
+        resultDiv.dataset.rawResult = formatted;
+        showMessage(message, 'success', true);
+    }
+
+    // 显示加载动画
+    function showLoading() {
+        loadingOverlay.style.display = 'flex';
+        encryptButton.disabled = true;
+        decryptButton.disabled = true;
+    }
+
+    // 隐藏加载动画
+    function hideLoading() {
+        loadingOverlay.style.display = 'none';
+        encryptButton.disabled = false;
+        decryptButton.disabled = false;
+    }
+
+    // 显示消息函数
+    function showMessage(message, type = 'info', showCopyBtn = false) {
+        resultDiv.textContent = message;
+        resultDiv.className = 'result-div';
+
+        if (type === 'success') {
+            resultDiv.classList.add('success');
+            copyButton.style.display = showCopyBtn ? 'block' : 'none';
+        } else if (type === 'error') {
+            resultDiv.classList.add('error');
+            copyButton.style.display = 'none';
+        } else if (type === 'loading') {
+            resultDiv.classList.add('loading');
+            copyButton.style.display = 'none';
+        } else {
+            copyButton.style.display = 'none';
+        }
+    }
+
+    // 调用接口函数（返回纯文本）
+    async function callApi(endpoint, data, retryCount = API_CONFIG.retryCount) {
+        for (let i = 0; i <= retryCount; i++) {
+            try {
+                const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                    signal: AbortSignal.timeout(API_CONFIG.timeout)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                // 直接返回纯文本
+                return await response.text();
+            } catch (error) {
+                if (i === retryCount) {
+                    throw error;
+                }
+                // 等待1秒后重试
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+    }
+
+    // 加密处理
+    encryptButton.addEventListener('click', async () => {
+        const textToEncrypt = numbersInput.value.trim();
+
+        if (!textToEncrypt) {
+            showMessage('请输入要加密的文本！', 'error');
+            numbersInput.focus();
+            return;
+        }
+
+        showMessage('正在加密中...', 'loading');
+        showLoading();
+
+        try {
+            // 调用加密接口
+            const result = await callApi(API_CONFIG.endpoints.encode, {
+                encode_string: textToEncrypt
+            });
+
+            // 使用新的处理函数
+            processResult(result, '加密');
+
+        } catch (error) {
+            let errorMsg = error.message;
+            if (error.name === 'AbortError') {
+                errorMsg = '请求超时，请检查网络连接或稍后重试';
+            } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                errorMsg = '网络错误，无法连接到服务器';
+            }
+            showMessage(`❌ 加密失败：${errorMsg}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // 解密处理
+    decryptButton.addEventListener('click', async () => {
+        const encryptedText = numbersInput.value.trim();
+
+        if (!encryptedText) {
+            showMessage('请输入要解密的文本！', 'error');
+            numbersInput.focus();
+            return;
+        }
+
+        showMessage('正在解密中...', 'loading');
+        showLoading();
+
+        try {
+            // 调用解密接口
+            const result = await callApi(API_CONFIG.endpoints.decode, {
+                decode_string: encryptedText
+            });
+
+            // 使用新的处理函数
+            processResult(result, '解密');
+
+        } catch (error) {
+            let errorMsg = error.message;
+            if (error.name === 'AbortError') {
+                errorMsg = '请求超时，请检查网络连接或稍后重试';
+            } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                errorMsg = '网络错误，无法连接到服务器';
+            }
+            showMessage(`❌ 解密失败：${errorMsg}`, 'error');
+        } finally {
+            hideLoading();
+        }
+    });
+
+copyButton.addEventListener('click', async () => {
+    const textToCopy = resultDiv.textContent;
+
+    if (!textToCopy || textToCopy.includes('等待处理结果')) {
+        return;
+    }
+
+    try {
+        const copyText = resultDiv.dataset.rawResult || textToCopy;
+        
+        try {
+            // 首先尝试使用新的 Clipboard API
+            await navigator.clipboard.writeText(copyText);
+        } catch (clipboardError) {
+            console.warn('Clipboard API failed, falling back to document.execCommand', clipboardError);
+            // 这里加入在未提供 HTTPS 下被屏蔽的情况回退到老板本复制方法
+            const textArea = document.createElement("textarea");
+            textArea.value = copyText;
+            // 避免滚动
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            if (!successful) {
+                 throw new Error('document.execCommand failed');
+            }
+        }
+
+        // 显示复制成功反馈
+        const originalText = copyButton.innerHTML;
+        copyButton.innerHTML = '<i class="fas fa-check"></i> 已复制';
+        copyButton.classList.add('success');
+
+        setTimeout(() => {
+            copyButton.innerHTML = originalText;
+            copyButton.classList.remove('success');
+        }, 2000);
+
+    } catch (error) {
+        console.error('复制失败:', error);
+        showMessage('复制失败，请手动选择复制', 'error');
+    }
+});
+    // 清空按钮
+    clearButton.addEventListener('click', () => {
+        numbersInput.value = '';
+        delete resultDiv.dataset.rawResult;
+        showMessage('等待处理结果...', 'info');
+        copyButton.style.display = 'none';
+        numbersInput.focus();
+    });
+
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'e') {
+            e.preventDefault();
+            encryptButton.click();
+        }
+        if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            decryptButton.click();
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            clearButton.click();
+        }
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            encryptButton.click();
+        }
+        if (e.key === 'Enter' && e.altKey) {
+            e.preventDefault();
+            decryptButton.click();
+        }
+    });
+
+    // 页面加载完成后的初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 输入框自动聚焦
+        numbersInput.focus();
+
+        // 显示初始状态
+        setTimeout(() => {
+            showMessage('✅ 服务已准备就绪，请输入要处理的内容...\n\n✨ 新增功能：自动识别并格式化JSON数据\n\n加密接口：' + API_CONFIG.baseUrl + API_CONFIG.endpoints.encode + '\n解密接口：' + API_CONFIG.baseUrl + API_CONFIG.endpoints.decode, 'success');
+        }, 500);
+    });
+
+    // 输入框内容变化时自动隐藏复制按钮
+    numbersInput.addEventListener('input', () => {
+        copyButton.style.display = 'none';
+    });
+</script>
+</body>
+</html>

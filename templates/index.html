@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发工具箱</title>
+    <link rel="icon" type="image/x-icon" href="../static/images/index-logo.png">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+{% include '_sidebar.html' %}
+
+<div class="main-content">
+    <div class="content-header">
+        <h1>开发工具箱</h1>
+        <p>一站式开发辅助工具集合，为您提供便捷的开发体验</p>
+    </div>
+
+    <div class="function-card">
+        <h2><i class="fas fa-tools"></i> 工具集合</h2>
+
+        <div class="tools-grid"
+             style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
+            {% for card in home_tool_cards %}
+            <a href="{{ card.href }}" style="text-decoration: none;">
+                <div class="tool-card"
+                     style="background: {{ card.color }}; color: white; padding: 25px; border-radius: 12px; transition: transform 0.3s ease;">
+                    <h3><i class="{{ card.icon }}"></i> {{ card.title }}</h3>
+                    <p>{{ card.description }}</p>
+                </div>
+            </a>
+            {% endfor %}
+
+            <!-- 外部链接容器，由JavaScript动态渲染 -->
+            <div id="external-links-container" style="display: contents;"></div>
+            
+        </div>
+
+        <div style="margin-top: 40px; background: #f8f9fa; padding: 25px; border-radius: 12px;">
+            <h3><i class="fas fa-rocket"></i> 快速开始</h3>
+            <ul style="margin-top: 15px; padding-left: 20px; color: #666;">
+                <li>选择左侧菜单进入对应工具</li>
+                <li>使用快捷键提高效率：Ctrl+E (加密) / Ctrl+D (解密)</li>
+                <li>所有工具完全免费，无使用限制</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 外部链接配置数组 - 在此处添加新的外部链接
+    const externalLinks = [
+        {
+            url: 'https://zh.recompressor.com/',
+            title: '图片压缩工具',
+            description: '点击访问图片压缩工具',
+            icon: 'fas fa-external-link-alt',
+            color: 'linear-gradient(135deg, #4facfe, #00f2fe)'
+        },
+        // 添加更多外部链接示例:
+        {
+            url: 'https://www.sojson.com/',
+            title: 'json格式化',
+            description: 'json格式化转义工具',
+            icon: 'fas fa-globe',
+            color: 'linear-gradient(135deg, #667eea, #764ba2)'
+        },
+        {
+            url: 'https://web.fly63.com/tool/textToImg/',
+            title: '在线文字生成图片工具',
+            description: '在线文字生成图片工具',
+            icon: 'fas fa-image',
+            color: 'linear-gradient(135deg, #ff6b6b, #ffa500)'
+        }
+    ];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 渲染外部链接
+        const container = document.getElementById('external-links-container');
+        externalLinks.forEach(link => {
+            const linkElement = document.createElement('a');
+            linkElement.href = link.url;
+            linkElement.target = '_blank';
+            linkElement.style.textDecoration = 'none';
+            
+            linkElement.innerHTML = `
+                <div class="tool-card"
+                     style="background: ${link.color}; color: white; padding: 25px; border-radius: 12px; transition: transform 0.3s ease;">
+                    <h3><i class="${link.icon}"></i> ${link.title}</h3>
+                    <p>${link.description}</p>
+                </div>
+            `;
+            
+            container.appendChild(linkElement);
+        });
+
+        // 为工具卡片添加悬停效果
+        document.querySelectorAll('.tool-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+*connection_info*.txt
+current_mobile_num.json
+
+# IDE settings
+.idea/
+.vscode/
+.git.local-backup/
+
+# Python cache and test cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# JavaScript dependencies
+node_modules/
+
+# Runtime files
+*.log
+logs/
+temps/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build and generated artifacts
+build/
+dist/
+allure-results/
+
+# Local virtual environments
+venv/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db

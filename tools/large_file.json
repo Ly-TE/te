@@ -1,0 +1,379 @@
+{
+    "device_type": "android",
+    "flow": [
+        {
+            "bytes": 935056,
+            "domain": "vvhokvqpli.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 276732,
+            "domain": "sbyfnfjnji.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 864279,
+            "domain": "wklxisoeah.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 525396,
+            "domain": "tldqwzurqj.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 964026,
+            "domain": "omqrxczafs.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 853332,
+            "domain": "fqjhmqxnvm.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 68939,
+            "domain": "ielfgiviio.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 765447,
+            "domain": "yohiyieomr.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 496914,
+            "domain": "yukrsikakm.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 752902,
+            "domain": "lksefwtqam.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 457874,
+            "domain": "wtssltqdgj.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 525862,
+            "domain": "nhgdpslxvh.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 426826,
+            "domain": "oigweaxiex.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 3097,
+            "domain": "zqbpzsbvex.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 182973,
+            "domain": "xfjqkzysra.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 41331,
+            "domain": "hxqvepdqjs.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 29137,
+            "domain": "dzkwrffnjz.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 431524,
+            "domain": "cvscgejgcd.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 372701,
+            "domain": "kcbfyjnmsv.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 861347,
+            "domain": "gdczydeqvk.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 759087,
+            "domain": "fgvjplknjy.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 455576,
+            "domain": "wodbaldfdu.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 501203,
+            "domain": "tqqpnrxugm.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 67017,
+            "domain": "mrpohhiqip.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 458476,
+            "domain": "bfgoviurhn.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 107901,
+            "domain": "wrcnsglsuj.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 279845,
+            "domain": "kmxtbnqqkz.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 289193,
+            "domain": "terhgfqkpc.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 480664,
+            "domain": "lavbpmwkve.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 664529,
+            "domain": "glshlxhwnx.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 82010,
+            "domain": "jghvvcmsaf.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 27436,
+            "domain": "tsmdidkqae.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 180308,
+            "domain": "adiqhxmkcu.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 282446,
+            "domain": "gdtqaihqkx.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 969523,
+            "domain": "cyngazkjtp.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 330883,
+            "domain": "yjwibwodfe.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 690551,
+            "domain": "cctpbxeker.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 457956,
+            "domain": "cmppopdjan.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 557581,
+            "domain": "naxtcdibga.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 752483,
+            "domain": "lhbopgbifh.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 95391,
+            "domain": "jkoviouqfy.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 799315,
+            "domain": "cxkiqtippo.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 212762,
+            "domain": "ypjpotjxum.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 439530,
+            "domain": "mzfnkucspe.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 969174,
+            "domain": "jpjcdoetxm.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 234416,
+            "domain": "dspgfhpoha.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 410624,
+            "domain": "kvoxiqccvz.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 897265,
+            "domain": "ugsiyeplbf.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 314771,
+            "domain": "ohzjbsgbjc.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 965810,
+            "domain": "inadmbxlai.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 692951,
+            "domain": "jiwnmwkvie.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 407119,
+            "domain": "gdcuijekbw.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 432187,
+            "domain": "djfxcdwozo.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 865724,
+            "domain": "zlazzbxkwx.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 235181,
+            "domain": "hlsoxucucw.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 741585,
+            "domain": "ncailplrtf.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 605719,
+            "domain": "cufcrkdoec.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 28515,
+            "domain": "oednwezpfv.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 481937,
+            "domain": "egpurwsjko.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 574619,
+            "domain": "gwrzztpkgq.com",
+            "flow_type": "TCP",
+            "proxy": true
+        },
+        {
+            "bytes": 98348,
+            "domain": "dybcqvliwb.com",
+            "flow_type": "HTTP",
+            "proxy": true
+        },
+        {
+            "bytes": 189283,
+            "domain": "nupryykiut.com",
+            "flow_type": "TCP",
+            "proxy": true
+        }
+    ],
+    "gameId": 5,
+    "account_token": "Us3nvyM7YMW1HfHh3wnQ"
+}

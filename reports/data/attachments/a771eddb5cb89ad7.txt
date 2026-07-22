@@ -1,0 +1,1 @@
+INFO     commons.get_log:test_client_login.py:28 bP969O7Y0jow3DM6aKN2Y3O21

@@ -1,0 +1,18 @@
+.side-nav__brand {
+  background:url('leigod.jpg') no-repeat left center !important;
+  margin-left: 15px;
+  height: 55px;
+  width: 150px;
+  background-size: contain !important;
+  font-family: auto;
+  display: flex;
+  align-items: flex-end;
+}
+
+.side-nav__brand span{
+  display: none;
+}
+.side-nav__brand:after{
+  content: "";
+  margin-left: 20px;
+}
